@@ -1,0 +1,50 @@
+# rootandadmin
+
+Öğrendiklerimizi, günlük haberleri ve kendi düşüncelerimizi paylaştığımız blog platformu ve yönetim paneli.
+
+**Ekip:** Abdulbaki İmsal ([@bakimsal](https://github.com/bakimsal)) · Buğra Gedik ([@bugragedik](https://github.com/bugragedik))
+
+## Teknolojiler
+
+| Katman | Araç | Yayın |
+|---|---|---|
+| Frontend | Next.js + TypeScript + Tailwind CSS | Vercel (Hobby) |
+| Backend | Node.js + TypeScript + Fastify, doğrulama için Zod | Render (Free) |
+| Veritabanı | PostgreSQL + Prisma | Neon (Free) |
+| Görseller | Cloudinary | Cloudinary (Free) |
+| İçerik | Markdown, kod renklendirme için Shiki | — |
+
+Aylık maliyet: 0. Kararların gerekçeleri için [docs/kararlar.md](docs/kararlar.md).
+
+## Klasör yapısı
+
+```
+rootandadmin/
+├── frontend/        Next.js uygulaması (blog + admin panel arayüzü)
+├── backend/         Fastify API (auth, yazılar, kategoriler, görsel yükleme)
+├── docs/
+│   ├── api-sozlesmesi.md     Frontend ile backend arasındaki sözleşme (TASLAK)
+│   ├── kararlar.md           Teknoloji kararları ve gerekçeleri
+│   └── rootandadmin-plan.xlsx  4 haftalık plan, araçlar, özellik listesi
+├── .github/         PR ve issue şablonları
+├── CONTRIBUTING.md  Branch, commit ve PR kuralları
+└── CLAUDE.md        Claude için proje bağlamı
+```
+
+## Başlarken
+
+1. Repoyu klonlayın: `git clone https://github.com/bakimsal/rootandadmin.git`
+2. `dev` branch'ine geçin: `git checkout dev`
+3. Frontend için [frontend/README.md](frontend/README.md), backend için [backend/README.md](backend/README.md) adımlarını izleyin.
+4. Çalışmaya başlamadan önce [CONTRIBUTING.md](CONTRIBUTING.md) dosyasını okuyun.
+
+## Takvim
+
+| Faz | Tarih | İçerik |
+|---|---|---|
+| 1 · Kurulum | 12–14 Ekim | Repo, hesaplar, API sözleşmesi, tasarım yönü |
+| 2 · Geliştirme | 15–28 Ekim | Frontend (mock veri) ve backend paralel |
+| 3 · Birleştirme | 29 Ekim – 4 Kasım | Gerçek API, SEO, test |
+| 4 · Yayın | 5–8 Kasım | Yayına alma, ilk yazılar |
+
+Görev bazında detaylı plan: [docs/rootandadmin-plan.xlsx](docs/rootandadmin-plan.xlsx) ve GitHub Projects panosu.

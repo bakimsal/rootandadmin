@@ -1,0 +1,6 @@
+# Windows ve macOS/Linux arasında satır sonu farklarını önler
+* text=auto eol=lf
+*.xlsx binary
+*.png binary
+*.jpg binary
+*.webp binary

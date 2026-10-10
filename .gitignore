@@ -1,0 +1,32 @@
+# Bağımlılıklar
+node_modules/
+
+# Derleme çıktıları
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# Ortam değişkenleri (örnek dosyalar hariç)
+.env
+.env.*
+!.env.example
+
+# Loglar
+npm-debug.log*
+*.log
+
+# Vercel
+.vercel
+
+# Editör ve işletim sistemi
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Test
+coverage/
