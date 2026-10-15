@@ -1,43 +1,185 @@
-# API sözleşmesi — TASLAK
+# API sözleşmesi
 
-> Bu bir başlangıç taslağıdır. 13–14 Ekim'deki toplantıda birlikte gözden geçirilip kesinleşecek. Değişiklikler önce burada yapılır, sonra koda geçer.
+> **Sürüm 0.2 · 15 Ekim 2026.** "Veri modeli" bölümü T1 görevine göre yeniden yazıldı ve ikinizin onayını bekliyor. Uç nokta bölümleri T2'de yeni modele göre baştan yazılacak; şimdilik yalnızca veri modeli kararlarının gerektirdiği değişiklikler işlendi. Değişiklikler önce burada yapılır, sonra koda geçer. Bu dosyaya dokunan PR ikinizin onayı olmadan birleşmez.
 
-**Taban URL:** `/api` · **Format:** JSON · **Tarihler:** ISO 8601 (UTC) · **Kimlik doğrulama:** httpOnly cookie (yalnızca `/api/admin/*` ve `/api/auth/me`)
+**Taban URL:** `/api` · **Format:** JSON · **Tarihler:** ISO 8601, UTC (ekranda `Europe/Istanbul` saat dilimiyle gösterilir) · **Kimlik doğrulama:** httpOnly oturum çerezi (yalnızca `/api/admin/*` ve `/api/auth/me`)
 
 ## Veri modeli
 
+### Genel kurallar
+
+- Tüm kimlikler (`id`) `cuid` biçiminde metindir.
+- Tüm tarih alanları veritabanında saat dilimli tutulur (Prisma: `@db.Timestamptz(3)`).
+- Her `slug` kendi tablosunda benzersizdir. Kategori ve etiket `name` alanları da benzersizdir; çakışmada `409 CONFLICT` döner.
+- "İç alan" diye işaretlenen alanlar veritabanında bulunur ama hiçbir API yanıtında dönmez.
+
 ### Yazı (Post)
+
+Haber ve blog aynı tabloda tutulur ve `type` ile ayrılır.
 
 | Alan | Tip | Not |
 |---|---|---|
-| `id` | string (cuid) | |
+| `id` | string | |
+| `type` | `NEWS` \| `BLOG` | Zorunlu. Oluşturulduktan sonra değiştirilebilir |
 | `title` | string | Zorunlu, en fazla 160 karakter |
-| `slug` | string | Benzersiz. Boş gelirse başlıktan üretilir (Türkçe karakterler dönüştürülür) |
-| `excerpt` | string | Liste ve SEO için kısa özet, en fazla 300 karakter |
-| `content` | string | Markdown |
-| `coverImage` | string \| null | Cloudinary URL |
-| `status` | `DRAFT` \| `PUBLISHED` \| `SCHEDULED` | |
-| `publishedAt` | string \| null | Yayın tarihi. `SCHEDULED` ise gelecekteki tarih |
-| `readingTime` | number | Dakika. İçerikten otomatik hesaplanır (~200 kelime/dk), admin elle değiştirebilir |
-| `readingTimeManual` | boolean | `true` ise otomatik hesaplama yapılmaz |
-| `author` | Author | |
-| `category` | Category | Tek kategori |
-| `tags` | Tag[] | |
-| `metaTitle` | string \| null | Boşsa `title` kullanılır |
-| `metaDescription` | string \| null | Boşsa `excerpt` kullanılır |
+| `slug` | string | Benzersiz. Kurallar aşağıda |
+| `excerpt` | string \| null | Liste ve SEO için kısa özet, en fazla 300 karakter. Yayında zorunlu |
+| `content` | string | Markdown. Taslakta boş olabilir, yayında zorunlu |
+| `coverImage` | CoverImage \| null | Aşağıya bakın |
+| `status` | `DRAFT` \| `PUBLISHED` | Veritabanında yalnızca bu iki durum tutulur |
+| `scheduled` | boolean | **Yalnızca admin yanıtlarında.** Türetilir, saklanmaz: `status = PUBLISHED` ve `publishedAt > şimdi` |
+| `publishedAt` | string \| null | Yayın tarihi. Gelecekteki bir tarih yazıyı zamanlanmış yapar |
+| `readingTime` | number | Dakika, en az 1 |
+| `readingTimeManual` | boolean | `true` ise okuma süresi otomatik hesaplanmaz |
+| `severity` | `CRITICAL` \| `HIGH` \| `INFO` \| null | Yalnızca haberde. Haberde varsayılanı `INFO`; blogda her zaman `null` |
+| `sourceUrl` | string \| null | Haberin dayandığı kaynağın adresi (`https://`). İsteğe bağlı |
+| `category` | CategorySummary \| null | Tek kategori. Haber yayına alınırken zorunlu, blogda isteğe bağlı |
+| `tags` | TagSummary[] | |
+| `author` | AuthorSummary | |
+| `metaTitle` | string \| null | Boşsa `title` kullanılır. En fazla 70 karakter |
+| `metaDescription` | string \| null | Boşsa `excerpt` kullanılır. En fazla 160 karakter |
 | `createdAt`, `updatedAt` | string | |
+| `lastRevalidatedAt` | tarih \| null | **İç alan.** Zamanlanmış yazıların sayfa yenilemesi için (bkz. "Zamanlanmış yazılar") |
 
-### Yazar (Author)
+**CoverImage:** `{ url, width, height, alt, publicId }`
 
-`id`, `name`, `slug`, `bio`, `avatar`, `socials` (`{ github?, x?, linkedin?, website? }`)
+- `url`, `width`, `height` görsel yükleme yanıtından gelir. `width` ve `height` görselin sayfada yer kaydırmadan yüklenmesi için gereklidir.
+- `alt` zorunlu, en fazla 200 karakter. Hem erişilebilirlik hem SEO için.
+- `publicId` Cloudinary'deki kimliktir. Görsel değiştirilince ya da yazı silinince eskisi Cloudinary'den silinir. Yalnızca admin yanıtlarında döner.
+- Veritabanında düz sütunlar olarak tutulabilir (`coverImageUrl`, `coverImageWidth`…). API'de her zaman bu nesne biçimindedir.
+
+**Görünürlük:** Herkese açık uçlarda yalnızca `status = PUBLISHED` ve `publishedAt <= şimdi` olan yazılar görünür. Admin uçları tüm yazıları döndürür. Admin listesindeki `status` filtresi `DRAFT`, `SCHEDULED` ve `PUBLISHED` değerlerini alır. Buradaki `SCHEDULED` saklanan bir durum değildir, yukarıdaki koşuldan türetilir.
+
+**Taslak ve yayın doğrulaması:** Backend'de iki ayrı Zod şeması bulunur.
+
+| Alan | Taslak (`DRAFT`) | Yayın (`PUBLISHED`) |
+|---|---|---|
+| `type`, `title` | Zorunlu | Zorunlu |
+| `content`, `excerpt` | Boş olabilir | Zorunlu |
+| `category` | Boş olabilir | Haberde zorunlu, blogda isteğe bağlı |
+| `severity` | Haberde boşsa `INFO` olur | Haberde zorunlu; blogda gönderilirse `400` |
+| `coverImage` | Boş olabilir | Boş olabilir. Doluysa `alt` zorunlu |
+
+PATCH isteklerinde kontrol, yazının güncellemeden sonraki tam hali üzerinden yapılır. Örneğin yalnızca `{ "status": "PUBLISHED" }` gönderilse bile içeriği boş bir yazı yayına alınamaz.
+
+**Slug kuralları:**
+
+1. Slug boş gelirse başlıktan üretilir: `slugify(title, { locale: 'tr', lower: true, strict: true })`. Örnek: "Şifreleme Çıkmazları" → `sifreleme-cikmazlari`.
+2. Üretilen slug başka bir yazıda varsa sonuna sırayla `-2`, `-3`… eklenir.
+3. Slug elle girildiyse ve başka bir yazıda varsa otomatik ek yapılmaz, `409 CONFLICT` döner (`fields.slug`).
+4. Yayınlanmış bir yazının slug'ı değişirse eski link kırılır. Admin panel bu durumda kaydetmeden önce uyarı gösterir. Eski adreslerin yeni adrese yönlendirilmesi sonraki sürüme bırakıldı.
+
+**`publishedAt` kuralları:**
+
+- Yazı yayına alınırken `publishedAt` boşsa o anki zaman yazılır.
+- Gelecekteki bir tarih girilirse yazı o tarihe kadar zamanlanmış kalır.
+- Yayındaki bir yazı taslağa geri alınırsa `publishedAt` korunur. Tekrar yayına alınınca aynı tarihle görünür; admin isterse tarihi değiştirir.
+- Taslakta `publishedAt` dolu olabilir. Bu yalnızca planlanan tarihi gösterir, yazıyı yayına almaz.
+
+**Okuma süresi:** `readingTimeManual = false` ise içerik her kaydedildiğinde sunucuda hesaplanır: kelime sayısı / 200, yukarı yuvarlanır, en az 1. İstek gövdesindeki `readingTime` yalnızca `readingTimeManual = true` ise dikkate alınır.
+
+**Yazma alanları (POST / PATCH `/api/admin/posts`):** `type`, `title`, `slug`, `excerpt`, `content`, `coverImage` (`{ url, width, height, alt, publicId }` ya da `null`), `status`, `publishedAt`, `readingTime`, `readingTimeManual`, `severity`, `sourceUrl`, `categoryId`, `tagIds` (string[]), `metaTitle`, `metaDescription`.
+
+- `author` gövdeden alınmaz; yazar her zaman oturumdaki kullanıcının yazar profilidir.
+- Yeni etiket gerekiyorsa admin panel önce `POST /api/admin/tags` ile oluşturur, sonra kimliğini `tagIds` içine koyar.
+- `id`, `scheduled`, `createdAt` ve `updatedAt` gövdede gelirse yok sayılır.
 
 ### Kategori (Category)
 
-`id`, `name`, `slug`, `description`. Başlangıç kategorileri: **Öğrendiklerimiz**, **Haberler**, **Düşünceler**.
+`id`, `name`, `slug`. Herkese açık listede ayrıca `postCount` döner.
+
+- Kategoriler haber filtresi içindir. Başlangıç kategorileri: **zafiyet**, **saldırı**, **araç**.
+- `postCount` yalnızca herkese açık görünen yazıları sayar.
+- Yazısı olan bir kategori silinemez, `409 CONFLICT` döner (Prisma: `onDelete: Restrict`).
+- **CategorySummary** (yazının içinde): `{ name, slug }`
 
 ### Etiket (Tag)
 
-`id`, `name`, `slug`
+`id`, `name`, `slug`. Herkese açık listede ayrıca `postCount` döner. Etiketler serbesttir; bloglarda filtre olarak kullanılır.
+
+- `postCount` yalnızca herkese açık görünen yazıları sayar.
+- Bir etiket silinince yalnızca yazılarla bağlantısı silinir, yazılar kalır.
+- **TagSummary** (yazının içinde): `{ name, slug }`
+
+### Proje (Project)
+
+| Alan | Tip | Not |
+|---|---|---|
+| `id` | string | |
+| `name` | string | Zorunlu, en fazla 100 karakter |
+| `slug` | string | Benzersiz, yazıdakiyle aynı kurallarla üretilir |
+| `description` | string | Kart metni, en fazla 300 karakter |
+| `language` | string \| null | Ana dil, örn. `Go`, `Python` |
+| `repoUrl` | string \| null | `https://` adresi |
+| `demoUrl` | string \| null | `https://` adresi |
+| `featured` | boolean | Ana sayfada gösterilir. Varsayılan `false` |
+| `order` | number | Küçükten büyüğe sıralanır. Varsayılan `0` |
+| `createdAt`, `updatedAt` | string | Canlı akıştaki "proje güncellemesi" bunlardan beslenir |
+
+Projelerde taslak durumu yok: kaydedilen proje hemen herkese açıktır.
+
+### Yazar (Author)
+
+| Alan | Tip | Not |
+|---|---|---|
+| `id` | string | |
+| `name` | string | Zorunlu |
+| `slug` | string | Benzersiz |
+| `role` | string \| null | Ekip kartındaki unvan, örn. "Backend · Güvenlik" |
+| `bio` | string \| null | En fazla 500 karakter |
+| `avatarUrl` | string \| null | Cloudinary adresi |
+| `linkedinUrl` | string \| null | `https://` adresi |
+| `githubUsername` | string \| null | Yalnızca kullanıcı adı, adres değil |
+
+- **AuthorSummary** (yazının içinde): `{ name, slug, avatarUrl }`
+- Yazarlar API'den silinemez. Bir yazar yalnızca kendi profilini güncelleyebilir.
+
+### Kullanıcı (User)
+
+Admin girişi için. Her kullanıcı tam olarak bir yazar profiline bağlıdır. Yazardan ayrı tutulur, böylece şifre hash'i herkese açık yazar sorgularına hiçbir zaman karışmaz.
+
+| Alan | Tip | Not |
+|---|---|---|
+| `id` | string | |
+| `email` | string | Benzersiz, küçük harfe çevrilerek saklanır |
+| `passwordHash` | string | **İç alan.** argon2 |
+| `authorId` | string | Benzersiz (yazarla 1-1) |
+| `createdAt` | string | |
+| `lastLoginAt` | string \| null | |
+
+`GET /api/auth/me` yanıtı: `{ "data": { "user": { "id", "email" }, "author": Author } }`
+
+### Oturum (Session) — iç model
+
+API'de görünmez. Alanlar: `id`, `tokenHash`, `userId`, `expiresAt`, `createdAt`.
+
+- Girişte `crypto.randomBytes(32)` ile rastgele bir anahtar üretilir. Anahtarın kendisi çerezde, SHA-256 özeti `tokenHash` olarak veritabanında tutulur. Böylece veritabanı sızsa bile çalışan bir oturum ele geçirilemez.
+- Oturumlar 7 gün geçerlidir. Çıkışta kayıt silinir. Kullanıcı silinince oturumları da silinir (`onDelete: Cascade`).
+
+### İletişim mesajı (ContactMessage)
+
+| Alan | Tip | Not |
+|---|---|---|
+| `id` | string | |
+| `name` | string | Zorunlu, en fazla 100 karakter |
+| `email` | string | Zorunlu, geçerli e-posta |
+| `message` | string | Zorunlu, en fazla 2000 karakter |
+| `read` | boolean | Varsayılan `false` |
+| `createdAt` | string | |
+
+- IP adresi saklanmaz. Hız limiti bellekte tutulur. Kişisel veri en az tutulur (KVKK).
+- Tuzak alan (honeypot) veritabanında yer almaz.
+
+### Veritabanı indeksleri
+
+- `Post`: `@@index([type, status, publishedAt])`, ayrıca `categoryId` ve `authorId` için indeks
+- `Project`: `@@index([featured, order])`
+- `Session`: `tokenHash` benzersiz, `expiresAt` için indeks
+- `ContactMessage`: `@@index([read, createdAt])`
+
+### Canlı akış
+
+Ayrı bir tablo değil. Son yayınlanan haberlerden, bloglardan ve projelerden otomatik oluşur. Biçimi T2'de tanımlanacak.
 
 ## Ortak yanıt biçimleri
 
@@ -52,52 +194,99 @@
 ```json
 { "error": { "code": "VALIDATION_ERROR", "message": "Başlık zorunludur", "fields": { "title": "Zorunlu" } } }
 ```
-Kodlar: `VALIDATION_ERROR` (400), `UNAUTHORIZED` (401), `FORBIDDEN` (403), `NOT_FOUND` (404), `CONFLICT` (409, örn. slug çakışması), `INTERNAL` (500).
+Kodlar: `VALIDATION_ERROR` (400), `UNAUTHORIZED` (401), `FORBIDDEN` (403), `NOT_FOUND` (404), `CONFLICT` (409; örn. slug çakışması, yazısı olan kategoriyi silme), `RATE_LIMITED` (429), `INTERNAL` (500).
 
 ## Herkese açık uç noktalar
 
-Yalnızca `PUBLISHED` ve `publishedAt <= şimdi` olan yazılar döner.
+> T2'de projeler, canlı akış (`/api/feed`) ve iletişim formu (`POST /api/contact`) eklenecek, her uç noktaya örnek yanıt yazılacak.
+
+Yazılar için yalnızca "Görünürlük" kuralına uyan kayıtlar döner.
 
 | Metot | Yol | Açıklama |
 |---|---|---|
-| GET | `/api/posts` | Sorgu: `page`, `limit` (en fazla 50), `category`, `tag`, `author` (slug), `q` (arama). Listede `content` dönmez |
+| GET | `/api/posts` | Sorgu: `page`, `limit` (en fazla 50), `type`, `category`, `severity`, `tag`, `author` (slug). Listede `content` dönmez |
 | GET | `/api/posts/:slug` | Yazı detayı, `content` dahil |
 | GET | `/api/posts/:slug/related` | Aynı kategori/etiketlerden en fazla 3 yazı *(sonraki sürüm)* |
+| GET | `/api/search-index` | Arama dizini (aşağıya bakın) |
 | GET | `/api/categories` | Her kategori için `postCount` ile |
 | GET | `/api/tags` | Her etiket için `postCount` ile |
 | GET | `/api/authors` | |
 | GET | `/api/authors/:slug` | Yazar ve yazı sayısı |
 
+### Arama
+
+Okuyucunun arama isteği backend'e gitmez. Render'ın ücretsiz sunucusu uyuyorsa okuyucu yaklaşık 1 dakika beklerdi.
+
+- Frontend, `GET /api/search-index` yanıtını kendi `/search-index.json` adresinde önceden üretir ve yayın yenilemesiyle günceller. Arama tarayıcıda bu dosya üzerinde yapılır.
+- Yanıt: herkese açık tüm yazılar için `{ slug, type, title, excerpt, severity, category, tags, publishedAt }` dizisi. Sayfalama yok. `content` dahil değil, dosya küçük kalsın diye.
+- Metin araması yalnızca admin listesinde backend'de yapılır (`/api/admin/posts?q=`).
+
 ## Kimlik doğrulama
 
 | Metot | Yol | Açıklama |
 |---|---|---|
-| POST | `/api/auth/login` | Gövde: `{ email, password }`. Başarılıysa cookie set edilir |
-| POST | `/api/auth/logout` | Cookie silinir |
-| GET | `/api/auth/me` | Giriş yapan kullanıcı ve bağlı yazar profili |
+| POST | `/api/auth/login` | Gövde: `{ email, password }`. Başarılıysa çerez set edilir |
+| POST | `/api/auth/logout` | Oturum silinir, çerez temizlenir |
+| GET | `/api/auth/me` | Giriş yapan kullanıcı ve bağlı yazar profili (biçim "Kullanıcı" bölümünde) |
 
 ## Admin uç noktaları (giriş gerekli)
 
+> T2'de projeler ve iletişim mesajları için uç noktalar eklenecek.
+
 | Metot | Yol | Açıklama |
 |---|---|---|
-| GET | `/api/admin/posts` | Tüm durumlar. Sorgu: `page`, `limit`, `status`, `q` |
+| GET | `/api/admin/posts` | Tüm durumlar. Sorgu: `page`, `limit` (en fazla 50), `type`, `status` (`DRAFT` \| `SCHEDULED` \| `PUBLISHED`), `q` |
 | GET | `/api/admin/posts/:id` | |
-| POST | `/api/admin/posts` | Yeni yazı. Varsayılan `status: DRAFT` |
+| POST | `/api/admin/posts` | Yeni yazı. Varsayılan `status: DRAFT`. Gövde: "Yazma alanları" |
 | PATCH | `/api/admin/posts/:id` | Kısmi güncelleme |
-| DELETE | `/api/admin/posts/:id` | |
-| POST | `/api/admin/uploads` | `multipart/form-data`, alan adı `file`. Yanıt: `{ data: { url, width, height } }`. En fazla 5 MB, jpg/png/webp |
+| DELETE | `/api/admin/posts/:id` | Kapak görseli Cloudinary'den de silinir |
+| POST | `/api/admin/uploads` | `multipart/form-data`, alan adı `file`. Yanıt: `{ data: { url, width, height, publicId } }`. En fazla 5 MB, jpg/png/webp |
 | POST/PATCH/DELETE | `/api/admin/categories[/:id]` | |
 | POST/PATCH/DELETE | `/api/admin/tags[/:id]` | |
-| PATCH | `/api/admin/authors/:id` | Profil güncelleme |
+| PATCH | `/api/admin/authors/:id` | Yalnızca kendi profili, aksi halde `403` |
 
 ## Yayın sonrası yenileme
 
-Backend bir yazı yayınlandığında, güncellendiğinde veya silindiğinde frontend'in yenileme uç noktasını çağırır, böylece önceden üretilmiş sayfalar güncellenir:
+Okuyucu içeriğini etkileyen bir değişiklik olunca backend frontend'in yenileme ucunu çağırır. Böylece önceden üretilmiş sayfalar güncellenir.
 
-`POST {FRONTEND_URL}/api/revalidate` · Başlık: `x-revalidate-secret: <REVALIDATE_SECRET>` · Gövde: `{ "paths": ["/", "/blog/yazi-slug"] }`
+`POST {FRONTEND_URL}/api/revalidate` · Başlık: `x-revalidate-secret: <REVALIDATE_SECRET>` · Gövde: `{ "tags": ["posts"] }`
+
+Yenileme sayfa yollarıyla değil, **önbellek etiketleriyle** yapılır. Frontend her veri isteğini ilgili etiketle işaretler, yenileme ucu da gelen etiketler için `revalidateTag()` çağırır. Böylece kategori, etiket, yazar sayfaları, sitemap ve arama dizini ayrıca listelenmeden güncellenir.
+
+| Olay | Gönderilen etiketler |
+|---|---|
+| Yazı oluşturma, güncelleme veya silme (öncesinde ya da sonrasında herkese açıksa) | `posts` |
+| Kategori değişikliği | `categories`, `posts` |
+| Etiket değişikliği | `tags`, `posts` |
+| Yazar profili değişikliği | `authors`, `posts` |
+| Proje değişikliği | `projects` |
+
+İstek başarısız olursa admin işlemi yine başarılı sayılır, hata yalnızca log'a yazılır.
+
+## Zamanlanmış yazılar
+
+Zamanlanmış bir yazı, tarihi gelince herkese açık uçlarda kendiliğinden görünür; ek bir durum değişikliği gerekmez. Ancak önceden üretilmiş sayfaların da yenilenmesi gerekir. Bunun için:
+
+`POST /api/internal/publish-due` · Başlık: `x-cron-secret: <CRON_SECRET>` · Gövde yok
+
+1. Backend `status = PUBLISHED`, `publishedAt <= şimdi` ve (`lastRevalidatedAt` boş ya da `publishedAt`'ten önce) olan yazıları bulur.
+2. Bu tür yazı varsa `{ "tags": ["posts"] }` ile yenileme ucunu çağırır. Başarılı olursa bu yazıların `lastRevalidatedAt` alanına şimdiki zamanı yazar.
+3. Yanıt: `{ "data": { "revalidated": 2 } }`. Anahtar yanlışsa `401`.
+
+Normal yayınlamada da yenileme başarılı olursa `lastRevalidatedAt` güncellenir. Böylece aynı yazı ikinci kez yenilenmez.
+
+Bu ucu ücretsiz bir zamanlayıcı çağırır: Y4'teki cron-job.org (14 dakikada bir; aynı zamanda sunucuyu uyanık tutar) ya da saatlik bir GitHub Actions işi. Zamanlanmış bir yazı, tarihi geldikten sonra en geç bir sonraki çalışmada sitede görünür.
+
+## Kararlar (T1)
+
+Önceki taslağın açık soruları:
+
+- **Haberler için ayrı format gerekiyor mu?** Evet, ama ayrı tablo yerine `type = NEWS` ile. Habere özel alanlar: `severity` ve isteğe bağlı `sourceUrl`.
+- **Bir yazının birden fazla yazarı olabilir mi?** İlk sürümde hayır, tek yazar. Gerekirse sonradan bir migration ile çoklu yazara geçilir.
+- **Zamanlanmış yazılar nasıl yayına girecek?** Okumada tarih kontrolüyle; sayfaların yenilenmesi için `publish-due` ucu. Ayrıntı "Zamanlanmış yazılar" bölümünde.
 
 ## Açık sorular
 
-- Haberler için ayrı, daha kısa bir format gerekiyor mu, yoksa "Haberler" kategorisi yeterli mi?
-- Bir yazının birden fazla yazarı olabilir mi?
-- Zamanlanmış yazılar nasıl yayına girecek: her istekte tarih kontrolü mü (önerilen, ek altyapı gerektirmez), yoksa zamanlanmış görev mi?
+- Bloglar da kategori kullanacak mı, yoksa yalnızca etiketle mi filtrelenecek? Şu anki karar: kategori haberde zorunlu, blogda isteğe bağlı.
+- Proje detay sayfası olacak mı (T3'te tasarlanmamış ekran olarak geçiyor)? Olacaksa Project'e Markdown bir `content` alanı eklenmeli.
+- Canlı akıştaki "proje güncellemesi" yalnızca yeni projeleri mi kapsıyor, yoksa her düzenlemeyi mi?
