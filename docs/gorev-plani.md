@@ -1,6 +1,6 @@
 # rootandadmin — Görev Planı
 
-> Bu dosya Claude Docs'taki "rootandadmin — Görev Planı" dokümanının kopyasıdır. Plan değişirse ikisini birlikte güncelleyin. Görevler GitHub Projects panosunda issue olarak takip edilir.
+> Görev planının esas hali bu dosyadır. Claude Docs'taki "rootandadmin — Görev Planı" dokümanı ilk taslaktır ve artık güncellenmiyor. Görevler GitHub Projects panosunda issue olarak takip edilir; issue metinleri bu dosyadan kopyalanır, plan değişince issue'lar da güncellenir.
 
 Oct 11, 2026 · @Abdulbaki İMSAL
 
@@ -66,7 +66,7 @@ Kod yazmadan önce ikinizin de aynı araçlarla, aynı repoya erişebilir olmas�
 1. GitHub'da Settings → Branches → "Add rule": `main` ve `dev` için "Require a pull request before merging" ve "Require approvals: 1" açın.
 2. Projects → New project → **Board** şablonu, adı `rootandadmin`. Sütunlar: Yapılacak, Devam ediyor, İncelemede, Bitti.
 3. Bu dokümandaki her görevi bir issue olarak açın. Başlıkta kodunu kullanın ("F3 · Ortak düzen"), etiket olarak `frontend`, `backend` veya `ortak` ekleyin.
-4. Etiketler: `frontend`, `backend`, `ortak`, `gorev`, `hata`, `güvenlik`. (`gorev` ve `hata` issue şablonlarında kendiliğinden eklenir.)
+4. Etiketler: `frontend`, `backend`, `ortak`, `hata`, `güvenlik`.
 
 **Bitti sayılır:**
 
@@ -128,7 +128,7 @@ Canlı akış şeridi ayrı bir tablo değil. Son yayınlanan haber, blog ve pro
 
 1. Figma'daki renk değişkenlerini ve fontları `CLAUDE.md`'nin "Tasarım" bölümüne yazın: zemin `#000000`, yeşil `#17B85C`, mavi `#0B93D3`, kritik `#E5484D`, yüksek `#E5A50A`; fontlar Chakra Petch, IBM Plex Sans, JetBrains Mono.
 2. Eski A, B, C tasarım yönlerinin vazgeçildiğini not edin. Referans: Figma'daki "rootandadmin — Tasarım" dosyası.
-3. Henüz tasarlanmamış ekranları listeleyin: yazı detay, haber listesi, proje detayı, iletişim, admin panel.
+3. Henüz tasarlanmamış ekranları listeleyin: yazı detay, haber listesi, iletişim, admin panel. (Proje detay sayfası ilk sürümde yok, sözleşmede karar var.)
 
 **Bitti sayılır:**
 
@@ -230,7 +230,7 @@ Frontend, backend hazır olmadan sahte veriyle ilerliyor. Gerçek API'ye geçiş
 2. **Güvenlik:** `rehype-sanitize` zorunlu. Markdown içine yazılan zararlı bir `<script>` aksi halde sitede çalışır. Bir güvenlik bloğunda bu açığın olması çok kötü görünür.
 3. Sayfa düzeni: kapak görseli (alt metniyle), başlık, seviye etiketi, yazar, tarih, okuma süresi, haberde kaynak linki; geniş ekranda yanda içindekiler; altta yazar kutusu ve ilgili yazılar (`getRelatedPosts`, sözleşmede kuralı var).
 4. Kod bloklarında "kopyala" butonu.
-5. `generateStaticParams` ile tüm yazılar derleme sırasında üretilsin.
+5. `generateStaticParams` ile tüm yazılar derleme sırasında üretilsin. Adresler `/haberler/[slug]` ve `/bloglar/[slug]`; yanlış türün adresiyle gelen istek doğru adrese yönlendirilsin.
 6. Bu sayfanın Figma tasarımı henüz yok. Kodlamadan önce Claude'dan tasarımını isteyin.
 
 **Bitti sayılır:**
@@ -242,7 +242,7 @@ Frontend, backend hazır olmadan sahte veriyle ilerliyor. Gerçek API'ye geçiş
 
 **Ne:** Kalan herkese açık sayfalar. **Bağlı:** F4
 
-1. `/projeler`: tüm proje kartları, GitHub ve demo linkleri.
+1. `/projeler`: tüm proje kartları, GitHub ve demo linkleri. Proje detay sayfası yok, kartlar doğrudan bu linklere gider.
 2. `/iletisim`: ad, e-posta, mesaj formu. Botlara karşı görünmez bir tuzak alanı (honeypot) ekleyin. Form Faz 3'e kadar sahte başarı mesajı gösterir.
 3. `/yazar/[slug]`: yazar bilgisi ve yazıları.
 4. `/ara?q=...`: arama sonuçları. Header'daki arama butonu ve `⌘K` kısayolu buraya yönlendirir. Arama backend'e gitmez: `app/search-index.json/route.ts` sözleşmedeki `GET /api/search-index` yanıtını önceden üretir (`posts` etiketiyle), arama tarayıcıda bu dosya üzerinde yapılır. Türkçe karakterler için hem aranan metin hem veriler `toLocaleLowerCase('tr')` ile karşılaştırılsın.
@@ -386,7 +386,7 @@ Backend sözleşmedeki uç noktaları birebir uygular. Bir güvenlik bloğu oldu
 
 **Ne:** Ana sayfadaki kayan şerit, arama dizini ve admin araması. **Bağlı:** B4
 
-1. `GET /api/feed`: son 8 yayınlanmış haber, blog ve proje güncellemesi, etiketleriyle (KRİTİK, HABER, BLOG, PROJE).
+1. `GET /api/feed`: son 8 kayıt: yayınlanmış haberler, bloglar ve yeni eklenen projeler, etiketleriyle (KRİTİK, HABER, BLOG, PROJE).
 2. `GET /api/search-index`: herkese açık tüm yazıların arama dizini (alanlar sözleşmede). Okuyucu araması bu dizinle tarayıcıda yapılır, backend'e gelmez (F8).
 3. Admin listesindeki `q` araması için PostgreSQL'in kendi tam metin aramasını kullanın, ek servis gerekmez. `turkish` dil ayarıyla başlık, özet ve içerik aranır.
 4. Hız için elle yazılmış bir migration ile GIN indeksi ekleyin. Sorgu `prisma.$queryRaw` ile, parametreli yazılır (asla metin birleştirerek değil).

@@ -116,7 +116,7 @@ PATCH isteklerinde kontrol, yazının güncellemeden sonraki tam hali üzerinden
 | `demoUrl` | string \| null | `https://` adresi |
 | `featured` | boolean | Ana sayfada gösterilir. Varsayılan `false` |
 | `order` | number | Küçükten büyüğe sıralanır. Varsayılan `0` |
-| `createdAt`, `updatedAt` | string | Canlı akıştaki "proje güncellemesi" bunlardan beslenir |
+| `createdAt`, `updatedAt` | string | Canlı akışta yeni projeler `createdAt` ile yer alır |
 
 Projelerde taslak durumu yok: kaydedilen proje hemen herkese açıktır.
 
@@ -299,9 +299,13 @@ Bu ucu Y4'teki ücretsiz zamanlayıcı (cron-job.org) 14 dakikada bir çağırı
 - **Bir yazının birden fazla yazarı olabilir mi?** İlk sürümde hayır, tek yazar. Gerekirse sonradan bir migration ile çoklu yazara geçilir.
 - **Zamanlanmış yazılar nasıl yayına girecek?** Okumada tarih kontrolüyle; sayfaların yenilenmesi için `publish-due` ucu. Ayrıntı "Zamanlanmış yazılar" bölümünde.
 
+T1 sırasında çıkan sorular. Bu sürümü onaylayan PR'da itiraz edilmezse geçerlidir:
+
+- **Bloglar kategori kullanacak mı?** Kategori haberde zorunlu, blogda isteğe bağlı. Bloglar etiketle filtrelenir (F6).
+- **Yazı detay adresleri ne olacak?** Menüyle uyumlu olarak `/haberler/[slug]` ve `/bloglar/[slug]`. Slug iki türde ortak benzersiz olduğu için yanlış türün adresiyle gelen istek doğru adrese yönlendirilir.
+- **Proje detay sayfası olacak mı?** İlk sürümde hayır. Proje kartları doğrudan `repoUrl` ve `demoUrl` adreslerine gider. Gerekirse sonraki sürümde Project'e Markdown bir `content` alanı eklenir.
+- **Canlı akıştaki "proje" kaydı neyi kapsar?** Yalnızca yeni eklenen projeleri (`createdAt`). Her düzenleme akışa düşerse şerit aynı projeyle dolar.
+
 ## Açık sorular
 
-- Bloglar da kategori kullanacak mı, yoksa yalnızca etiketle mi filtrelenecek? Şu anki karar: kategori haberde zorunlu, blogda isteğe bağlı.
-- Yazı detay adresleri ne olacak? Öneri: menüyle uyumlu olarak `/haberler/[slug]` ve `/bloglar/[slug]`. Slug iki türde ortak benzersiz olduğu için tek bir `/yazi/[slug]` da mümkün.
-- Proje detay sayfası olacak mı (T3'te tasarlanmamış ekran olarak geçiyor)? Olacaksa Project'e Markdown bir `content` alanı eklenmeli.
-- Canlı akıştaki "proje güncellemesi" yalnızca yeni projeleri mi kapsıyor, yoksa her düzenlemeyi mi?
+Şu an yok. T2'de çıkan sorular buraya eklenir.
