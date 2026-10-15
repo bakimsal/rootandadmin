@@ -24,7 +24,7 @@ rootandadmin/
 ├── backend/         Fastify API (auth, yazılar, kategoriler, görsel yükleme)
 ├── docs/
 │   ├── gorev-plani.md        Görev görev yapılacaklar: kim, neyi, nasıl
-│   ├── api-sozlesmesi.md     Frontend ile backend arasındaki sözleşme (TASLAK)
+│   ├── api-sozlesmesi.md     Frontend ile backend arasındaki sözleşme (sürüm 0.2, onay bekliyor)
 │   ├── kararlar.md           Teknoloji kararları ve gerekçeleri
 │   └── rootandadmin-plan.xlsx  4 haftalık plan, araçlar, özellik listesi
 ├── .github/         PR ve issue şablonları

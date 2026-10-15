@@ -4,15 +4,15 @@ Fastify + TypeScript API. Veritabanı PostgreSQL (Neon), ORM Prisma.
 
 **Sorumlu:** Buğra (öneri)
 
-## İlk kurulum (bir kez, Faz 1)
+## İlk kurulum (bir kez, B1)
 
 Repo kök dizinindeyken:
 
 ```bash
 cd backend
 npm init -y
-npm install fastify @fastify/cookie @fastify/cors @fastify/multipart zod @prisma/client argon2 cloudinary slugify
-npm install -D typescript tsx @types/node prisma
+npm install fastify @fastify/cookie @fastify/cors @fastify/multipart @fastify/rate-limit @fastify/helmet zod @prisma/client argon2 cloudinary slugify file-type
+npm install -D typescript tsx @types/node prisma pino-pretty vitest
 npx tsc --init
 npx prisma init
 ```
@@ -44,7 +44,7 @@ npm run dev             # http://localhost:4000
 backend/
 ├── prisma/
 │   ├── schema.prisma
-│   └── seed.ts             İki admin kullanıcı ve başlangıç kategorileri
+│   └── seed.ts             İki admin kullanıcı, yazarlar, kategoriler (SEED_ADMIN_* değişkenleriyle)
 └── src/
     ├── server.ts           Uygulamanın başlangıç noktası
     ├── config.ts           Ortam değişkenlerinin Zod ile doğrulanması
@@ -55,8 +55,12 @@ backend/
     │   ├── categories/
     │   ├── tags/
     │   ├── authors/
+    │   ├── projects/
+    │   ├── contact/
+    │   ├── feed/           Canlı akış ve arama dizini
+    │   ├── internal/       publish-due (zamanlayıcının çağırdığı uç)
     │   └── uploads/
-    └── lib/                slug, okuma süresi, revalidate yardımcıları
+    └── lib/                slug, okuma süresi, revalidate, Cloudinary yardımcıları
 ```
 
 Her modül aynı düzeni izler: `routes.ts` (uç noktalar), `service.ts` (iş mantığı), `schemas.ts` (Zod şemaları). Uç noktalar [docs/api-sozlesmesi.md](../docs/api-sozlesmesi.md) ile birebir uyumlu olmalı.

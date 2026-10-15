@@ -1,6 +1,6 @@
 # API sözleşmesi
 
-> **Sürüm 0.2 · 15 Ekim 2026.** "Veri modeli" bölümü T1 görevine göre yeniden yazıldı ve ikinizin onayını bekliyor. Uç nokta bölümleri T2'de yeni modele göre baştan yazılacak; şimdilik yalnızca veri modeli kararlarının gerektirdiği değişiklikler işlendi. Değişiklikler önce burada yapılır, sonra koda geçer. Bu dosyaya dokunan PR ikinizin onayı olmadan birleşmez.
+> **Sürüm 0.2 · 15 Ekim 2026.** "Veri modeli" bölümü T1 görevine göre yeniden yazıldı ve ikinizin onayını bekliyor. `docs/gorev-plani.md` bu sürüme göre güncellendi. Uç nokta bölümleri T2'de yeni modele göre baştan yazılacak; şimdilik yalnızca veri modeli kararlarının gerektirdiği değişiklikler işlendi. Değişiklikler önce burada yapılır, sonra koda geçer. Bu dosyaya dokunan PR ikinizin onayı olmadan birleşmez.
 
 **Taban URL:** `/api` · **Format:** JSON · **Tarihler:** ISO 8601, UTC (ekranda `Europe/Istanbul` saat dilimiyle gösterilir) · **Kimlik doğrulama:** httpOnly oturum çerezi (yalnızca `/api/admin/*` ve `/api/auth/me`)
 
@@ -20,7 +20,7 @@ Haber ve blog aynı tabloda tutulur ve `type` ile ayrılır.
 | Alan | Tip | Not |
 |---|---|---|
 | `id` | string | |
-| `type` | `NEWS` \| `BLOG` | Zorunlu. Oluşturulduktan sonra değiştirilebilir |
+| `type` | `NEWS` \| `BLOG` | Zorunlu. Oluşturulduktan sonra değiştirilebilir (bkz. "Tür değişikliği") |
 | `title` | string | Zorunlu, en fazla 160 karakter |
 | `slug` | string | Benzersiz. Kurallar aşağıda |
 | `excerpt` | string \| null | Liste ve SEO için kısa özet, en fazla 300 karakter. Yayında zorunlu |
@@ -48,7 +48,7 @@ Haber ve blog aynı tabloda tutulur ve `type` ile ayrılır.
 - `publicId` Cloudinary'deki kimliktir. Görsel değiştirilince ya da yazı silinince eskisi Cloudinary'den silinir. Yalnızca admin yanıtlarında döner.
 - Veritabanında düz sütunlar olarak tutulabilir (`coverImageUrl`, `coverImageWidth`…). API'de her zaman bu nesne biçimindedir.
 
-**Görünürlük:** Herkese açık uçlarda yalnızca `status = PUBLISHED` ve `publishedAt <= şimdi` olan yazılar görünür. Admin uçları tüm yazıları döndürür. Admin listesindeki `status` filtresi `DRAFT`, `SCHEDULED` ve `PUBLISHED` değerlerini alır. Buradaki `SCHEDULED` saklanan bir durum değildir, yukarıdaki koşuldan türetilir.
+**Görünürlük:** Herkese açık uçlarda yalnızca `status = PUBLISHED` ve `publishedAt <= şimdi` olan yazılar görünür. Admin uçları tüm yazıları döndürür. Admin listesindeki `status` filtresi `DRAFT`, `SCHEDULED` ve `PUBLISHED` değerlerini alır. Buradaki `SCHEDULED` saklanan bir durum değildir, yukarıdaki koşuldan türetilir. Filtrede `PUBLISHED` yalnızca tarihi gelmiş yazıları, `SCHEDULED` tarihi gelmemiş olanları getirir.
 
 **Taslak ve yayın doğrulaması:** Backend'de iki ayrı Zod şeması bulunur.
 
@@ -61,6 +61,8 @@ Haber ve blog aynı tabloda tutulur ve `type` ile ayrılır.
 | `coverImage` | Boş olabilir | Boş olabilir. Doluysa `alt` zorunlu |
 
 PATCH isteklerinde kontrol, yazının güncellemeden sonraki tam hali üzerinden yapılır. Örneğin yalnızca `{ "status": "PUBLISHED" }` gönderilse bile içeriği boş bir yazı yayına alınamaz.
+
+**Tür değişikliği:** Tür `BLOG` yapılınca backend `severity`'yi kendiliğinden `null` yapar. Tür `NEWS` yapılınca `severity` boşsa `INFO` olur. `400` yalnızca blog olan ya da blog yapılan bir yazı için istekte açıkça bir `severity` değeri gönderilirse döner. Böylece admin panelin türü değiştirirken ayrıca `severity: null` göndermesi gerekmez.
 
 **Slug kuralları:**
 
@@ -128,11 +130,13 @@ Projelerde taslak durumu yok: kaydedilen proje hemen herkese açıktır.
 | `role` | string \| null | Ekip kartındaki unvan, örn. "Backend · Güvenlik" |
 | `bio` | string \| null | En fazla 500 karakter |
 | `avatarUrl` | string \| null | Cloudinary adresi |
+| `avatarPublicId` | string \| null | **İç alan.** Fotoğraf değişince eskisi Cloudinary'den silinir, ücretsiz kota dolmasın |
 | `linkedinUrl` | string \| null | `https://` adresi |
 | `githubUsername` | string \| null | Yalnızca kullanıcı adı, adres değil |
 
 - **AuthorSummary** (yazının içinde): `{ name, slug, avatarUrl }`
 - Yazarlar API'den silinemez. Bir yazar yalnızca kendi profilini güncelleyebilir.
+- Profil fotoğrafı güncellenirken `avatarUrl` ile birlikte yükleme yanıtındaki `publicId` de gönderilir (`avatarPublicId` olarak saklanır).
 
 ### Kullanıcı (User)
 
@@ -206,12 +210,22 @@ Yazılar için yalnızca "Görünürlük" kuralına uyan kayıtlar döner.
 |---|---|---|
 | GET | `/api/posts` | Sorgu: `page`, `limit` (en fazla 50), `type`, `category`, `severity`, `tag`, `author` (slug). Listede `content` dönmez |
 | GET | `/api/posts/:slug` | Yazı detayı, `content` dahil |
-| GET | `/api/posts/:slug/related` | Aynı kategori/etiketlerden en fazla 3 yazı *(sonraki sürüm)* |
+| GET | `/api/posts/:slug/related` | İlgili yazılar, en fazla 3 (aşağıya bakın) |
 | GET | `/api/search-index` | Arama dizini (aşağıya bakın) |
 | GET | `/api/categories` | Her kategori için `postCount` ile |
 | GET | `/api/tags` | Her etiket için `postCount` ile |
 | GET | `/api/authors` | |
 | GET | `/api/authors/:slug` | Yazar ve yazı sayısı |
+
+### İlgili yazılar
+
+Yazı detay sayfasının altında gösterilir (F7). Liste öğesi biçiminde, `content` olmadan döner.
+
+1. Aynı türden (`type`), görünür yazılar arasından seçilir; yazının kendisi hariç.
+2. Önce aynı kategoride olan ya da en az bir ortak etiketi bulunan yazılar, ortak etiket sayısına ve sonra `publishedAt`'e göre sıralanır.
+3. 3'ten az sonuç çıkarsa kalan yer aynı türün en yeni yazılarıyla doldurulur.
+
+Frontend bu ucu sayfa üretilirken çağırır; okuyucu isteği backend'e gitmez.
 
 ### Arama
 
@@ -275,7 +289,7 @@ Zamanlanmış bir yazı, tarihi gelince herkese açık uçlarda kendiliğinden g
 
 Normal yayınlamada da yenileme başarılı olursa `lastRevalidatedAt` güncellenir. Böylece aynı yazı ikinci kez yenilenmez.
 
-Bu ucu ücretsiz bir zamanlayıcı çağırır: Y4'teki cron-job.org (14 dakikada bir; aynı zamanda sunucuyu uyanık tutar) ya da saatlik bir GitHub Actions işi. Zamanlanmış bir yazı, tarihi geldikten sonra en geç bir sonraki çalışmada sitede görünür.
+Bu ucu Y4'teki ücretsiz zamanlayıcı (cron-job.org) 14 dakikada bir çağırır. Aynı istek Render sunucusunu da uyanık tutar. Zamanlanmış bir yazı, tarihi geldikten sonra en geç 14 dakika içinde sitede görünür.
 
 ## Kararlar (T1)
 
@@ -288,5 +302,6 @@ Bu ucu ücretsiz bir zamanlayıcı çağırır: Y4'teki cron-job.org (14 dakikad
 ## Açık sorular
 
 - Bloglar da kategori kullanacak mı, yoksa yalnızca etiketle mi filtrelenecek? Şu anki karar: kategori haberde zorunlu, blogda isteğe bağlı.
+- Yazı detay adresleri ne olacak? Öneri: menüyle uyumlu olarak `/haberler/[slug]` ve `/bloglar/[slug]`. Slug iki türde ortak benzersiz olduğu için tek bir `/yazi/[slug]` da mümkün.
 - Proje detay sayfası olacak mı (T3'te tasarlanmamış ekran olarak geçiyor)? Olacaksa Project'e Markdown bir `content` alanı eklenmeli.
 - Canlı akıştaki "proje güncellemesi" yalnızca yeni projeleri mi kapsıyor, yoksa her düzenlemeyi mi?
