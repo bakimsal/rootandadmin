@@ -15,6 +15,8 @@ Kriter: ücretsiz ya da çok cüzi maliyet. Ücretsiz plan bilgileri 10 Ekim 202
 | Frontend yayını | Vercel Hobby | Ücretsiz. **Yalnızca kişisel / ticari olmayan kullanım.** Reklam veya sponsorluk gelirse ücretli plan gerekir. |
 | Backend yayını | Render Free | Ayda 750 saat. 15 dk trafik yoksa uyur, uyanması ~1 dk. Okuyucu sayfaları önceden üretildiği için gecikme çoğunlukla admin panelde hissedilir. |
 | Analitik | Vercel Web Analytics | Hobby'de ayda 50.000 olay dahil. |
+| Okuyucu araması | Tarayıcıda, önceden üretilmiş arama dizini üzerinde | Okuyucu isteği uyuyan backend'e gitmez, ek servis gerekmez. PostgreSQL tam metin araması yalnızca admin panelde. |
+| Zamanlayıcı | cron-job.org (ücretsiz) | 14 dakikada bir zamanlanmış yazıların sayfalarını yeniler (`publish-due`), aynı istekle Render'ı uyanık tutar. |
 | Repo | Tek repo (monorepo) | İki ayrı repoyu senkron tutmaktan kolay. |
 
 ## Ertelenen

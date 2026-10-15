@@ -1,6 +1,6 @@
 # rootandadmin — Görev Planı
 
-> Bu dosya Claude Docs'taki "rootandadmin — Görev Planı" dokümanının kopyasıdır. Plan değişirse ikisini birlikte güncelleyin. Görevler GitHub Projects panosunda issue olarak takip edilir.
+> Görev planının esas hali bu dosyadır. Claude Docs'taki "rootandadmin — Görev Planı" dokümanı ilk taslaktır ve artık güncellenmiyor. Görevler GitHub Projects panosunda issue olarak takip edilir; issue metinleri bu dosyadan kopyalanır, plan değişince issue'lar da güncellenir.
 
 Oct 11, 2026 · @Abdulbaki İMSAL
 
@@ -84,14 +84,17 @@ Yeni siber tasarım menüyü Haberler, Bloglar, Projeler ve İletişim olarak de
 1. Aşağıdaki modeli birlikte gözden geçirin, eksik ya da fazla alanı tartışın.
 2. Kararları `docs/api-sozlesmesi.md` dosyasının "Veri modeli" bölümüne işleyin.
 
+> Aşağıdaki tablo sözleşmenin 0.2 sürümüyle eşitlendi. Alanların tipleri, sınırları ve kuralları sözleşmede; bir fark görürseniz sözleşme esastır.
+
 | Model | Alanlar | Not |
 | --- | --- | --- |
-| Post | `type` (NEWS / BLOG), `title`, `slug`, `excerpt`, `content` (Markdown), `coverImage`, `status` (DRAFT / PUBLISHED / SCHEDULED), `publishedAt`, `readingTime`, `severity` (CRITICAL / HIGH / INFO, sadece haberde), `category`, `tags`, `author`, `metaTitle`, `metaDescription` | Haber ve blog aynı tabloda, `type` ile ayrılıyor |
+| Post | `type` (NEWS / BLOG), `title`, `slug`, `excerpt`, `content` (Markdown), `coverImage` (`url`, `width`, `height`, `alt`, `publicId`), `status` (DRAFT / PUBLISHED), `publishedAt`, `readingTime`, `readingTimeManual`, `severity` (CRITICAL / HIGH / INFO, sadece haberde), `sourceUrl` (haber kaynağı), `category`, `tags`, `author`, `metaTitle`, `metaDescription` | Haber ve blog aynı tabloda, `type` ile ayrılıyor. "Zamanlanmış" ayrı bir durum değil: `PUBLISHED` ve ileri tarihli `publishedAt` |
 | Category | `name`, `slug` | Haber filtresi: zafiyet, saldırı, araç |
 | Tag | `name`, `slug` | Serbest etiketler |
-| Project | `name`, `slug`, `description`, `language`, `repoUrl`, `demoUrl`, `featured`, `order` | Projeler sayfası ve ana sayfa kartları |
-| Author | `name`, `slug`, `role`, `bio`, `avatarUrl`, `linkedinUrl`, `githubUsername` | Ekip kartları ve yazar sayfaları |
-| User | `email`, `passwordHash`, `author` | Admin girişi, bir yazara bağlı |
+| Project | `name`, `slug`, `description`, `language`, `repoUrl`, `demoUrl`, `featured`, `order`, `createdAt`, `updatedAt` | Projeler sayfası ve ana sayfa kartları |
+| Author | `name`, `slug`, `role`, `bio`, `avatarUrl`, `linkedinUrl`, `githubUsername` | Ekip kartları ve yazar sayfaları. İç alan: `avatarPublicId` |
+| User | `email`, `passwordHash`, `author`, `createdAt`, `lastLoginAt` | Admin girişi, bir yazara bağlı |
+| Session | `tokenHash`, `user`, `expiresAt`, `createdAt` | İç model, API'de görünmez (B2, B3) |
 | ContactMessage | `name`, `email`, `message`, `createdAt`, `read` | İletişim formu, admin panelden okunur |
 
 Canlı akış şeridi ayrı bir tablo değil. Son yayınlanan haber, blog ve projelerden otomatik oluşuyor.
@@ -109,6 +112,7 @@ Canlı akış şeridi ayrı bir tablo değil. Son yayınlanan haber, blog ve pro
    - `GET /api/posts?type=NEWS&category=zafiyet&page=1`
    - `GET /api/posts/:slug`, `GET /api/projects`, `GET /api/authors`, `GET /api/feed` (canlı akış için son 8 kayıt)
    - `POST /api/contact` (iletişim formu)
+   - Sözleşmeye T1'de eklenenler: `GET /api/search-index` (arama dizini), `GET /api/posts/:slug/related` (ilgili yazılar), `POST /api/internal/publish-due` (zamanlanmış yazılar)
    - Admin tarafında posts, projects, authors, contact-messages için CRUD
 2. Her uç nokta için bir örnek JSON yanıtı yazın. Frontend'in sahte verisi bu örneklerden üretilecek.
 3. TypeScript tiplerini `frontend/src/types/api.ts` dosyasına yazın. Backend'deki Zod şemaları bu tiplerle birebir aynı olacak.
@@ -124,7 +128,7 @@ Canlı akış şeridi ayrı bir tablo değil. Son yayınlanan haber, blog ve pro
 
 1. Figma'daki renk değişkenlerini ve fontları `CLAUDE.md`'nin "Tasarım" bölümüne yazın: zemin `#000000`, yeşil `#17B85C`, mavi `#0B93D3`, kritik `#E5484D`, yüksek `#E5A50A`; fontlar Chakra Petch, IBM Plex Sans, JetBrains Mono.
 2. Eski A, B, C tasarım yönlerinin vazgeçildiğini not edin. Referans: Figma'daki "rootandadmin — Tasarım" dosyası.
-3. Henüz tasarlanmamış ekranları listeleyin: yazı detay, haber listesi, proje detayı, iletişim, admin panel.
+3. Henüz tasarlanmamış ekranları listeleyin: yazı detay, haber listesi, iletişim, admin panel. (Proje detay sayfası ilk sürümde yok, sözleşmede karar var.)
 
 **Bitti sayılır:**
 
@@ -182,8 +186,9 @@ Frontend, backend hazır olmadan sahte veriyle ilerliyor. Gerçek API'ye geçiş
 **Ne:** Sayfalar veriyi tek bir dosyadan alır. Bu dosya şimdilik sahte veri döner, Faz 3'te gerçek API'ye geçer. **Bağlı:** F1, T2
 
 1. `lib/mock/` altına T2'deki örnek JSON'lardan en az 12 haber, 8 blog, 4 proje, 2 yazar oluşturun.
-2. `lib/api.ts` içinde `getPosts`, `getPost`, `getProjects`, `getAuthors`, `getFeed` fonksiyonlarını yazın. `USE_MOCK_DATA=true` ise sahte veriyi, değilse backend'i kullansınlar.
+2. `lib/api.ts` içinde `getPosts`, `getPost`, `getRelatedPosts`, `getProjects`, `getAuthors`, `getFeed`, `getSearchIndex` fonksiyonlarını yazın. `USE_MOCK_DATA=true` ise sahte veriyi, değilse backend'i kullansınlar.
 3. Fonksiyonların döndürdüğü tipler `types/api.ts`'den gelsin.
+4. Her backend isteğini sözleşmedeki önbellek etiketiyle işaretleyin (`fetch(url, { next: { tags: ['posts'] } })`). E3'teki yenileme buna dayanıyor.
 
 **Bitti sayılır:**
 
@@ -194,7 +199,7 @@ Frontend, backend hazır olmadan sahte veriyle ilerliyor. Gerçek API'ye geçiş
 **Ne:** Figma'daki ana sayfanın kodu. **Bağlı:** F3, F4
 
 1. Hero: yazılan `whoami` komutu, başlık, iki buton, sağda satırları sırayla beliren terminal penceresi.
-2. Son Haberler: 3 kart ve kategori filtresi. Filtre adres çubuğuna yazılsın (`?kategori=zafiyet`), paylaşılabilir olsun.
+2. Son Haberler: 3 kart ve kategori filtresi. Filtre adres çubuğuna yazılsın (`?kategori=zafiyet`), paylaşılabilir olsun. Filtreyi sayfa değil, bir istemci bileşeni `useSearchParams` ile okusun ve önceden üretilmiş veriyi süzsün. Sayfa sunucuda `searchParams` okursa her istekte yeniden üretilir ve okuyucu isteği uyuyan backend'e gider.
 3. Bloglar: öne çıkan yazı ve 4 satırlık liste. Projeler: 3 kart.
 4. Sayfayı önceden üretilecek şekilde yazın (`export const revalidate = 3600`).
 
@@ -210,10 +215,12 @@ Frontend, backend hazır olmadan sahte veriyle ilerliyor. Gerçek API'ye geçiş
 1. Haberlerde seviye (kritik / yüksek / bilgi) ve kategori filtresi, bloglarda etiket filtresi.
 2. Sayfa başına 12 kayıt, alt kısımda sayfalama (`?sayfa=2`).
 3. Sonuç yoksa boş durum mesajı.
+4. **Önemli:** Sayfa sunucuda `searchParams` okumasın, önceden üretilmiş kalsın. Filtre ve sayfa numarası bir istemci bileşeninde `useSearchParams` ile okunsun, önceden üretilmiş liste tarayıcıda süzülsün. Aksi halde her ziyaret backend'e gider (bkz. `CLAUDE.md`).
 
 **Bitti sayılır:**
 
 - [ ] Filtre ve sayfa numarası adres çubuğunda, geri tuşu doğru çalışıyor
+- [ ] `npm run build` çıktısında `/haberler` ve `/bloglar` "static" ya da "ISR" olarak görünüyor
 
 ### F7 · Yazı detay sayfası
 
@@ -221,9 +228,9 @@ Frontend, backend hazır olmadan sahte veriyle ilerliyor. Gerçek API'ye geçiş
 
 1. Markdown'ı HTML'e çevirmek için `unified` zinciri: `remark-parse`, `remark-gfm` (tablolar), `remark-rehype`, `rehype-sanitize`, `rehype-pretty-code` (Shiki ile kod renklendirme), `rehype-slug`.
 2. **Güvenlik:** `rehype-sanitize` zorunlu. Markdown içine yazılan zararlı bir `<script>` aksi halde sitede çalışır. Bir güvenlik bloğunda bu açığın olması çok kötü görünür.
-3. Sayfa düzeni: kapak görseli, başlık, seviye etiketi, yazar, tarih, okuma süresi; geniş ekranda yanda içindekiler; altta yazar kutusu ve ilgili yazılar.
+3. Sayfa düzeni: kapak görseli (alt metniyle), başlık, seviye etiketi, yazar, tarih, okuma süresi, haberde kaynak linki; geniş ekranda yanda içindekiler; altta yazar kutusu ve ilgili yazılar (`getRelatedPosts`, sözleşmede kuralı var).
 4. Kod bloklarında "kopyala" butonu.
-5. `generateStaticParams` ile tüm yazılar derleme sırasında üretilsin.
+5. `generateStaticParams` ile tüm yazılar derleme sırasında üretilsin. Adresler `/haberler/[slug]` ve `/bloglar/[slug]`; yanlış türün adresiyle gelen istek doğru adrese yönlendirilsin.
 6. Bu sayfanın Figma tasarımı henüz yok. Kodlamadan önce Claude'dan tasarımını isteyin.
 
 **Bitti sayılır:**
@@ -235,10 +242,10 @@ Frontend, backend hazır olmadan sahte veriyle ilerliyor. Gerçek API'ye geçiş
 
 **Ne:** Kalan herkese açık sayfalar. **Bağlı:** F4
 
-1. `/projeler`: tüm proje kartları, GitHub ve demo linkleri.
+1. `/projeler`: tüm proje kartları, GitHub ve demo linkleri. Proje detay sayfası yok, kartlar doğrudan bu linklere gider.
 2. `/iletisim`: ad, e-posta, mesaj formu. Botlara karşı görünmez bir tuzak alanı (honeypot) ekleyin. Form Faz 3'e kadar sahte başarı mesajı gösterir.
 3. `/yazar/[slug]`: yazar bilgisi ve yazıları.
-4. `/ara?q=...`: arama sonuçları. Header'daki arama butonu ve `⌘K` kısayolu buraya yönlendirir.
+4. `/ara?q=...`: arama sonuçları. Header'daki arama butonu ve `⌘K` kısayolu buraya yönlendirir. Arama backend'e gitmez: `app/search-index.json/route.ts` sözleşmedeki `GET /api/search-index` yanıtını önceden üretir (`posts` etiketiyle), arama tarayıcıda bu dosya üzerinde yapılır. Türkçe karakterler için hem aranan metin hem veriler `toLocaleLowerCase('tr')` ile karşılaştırılsın.
 5. `not-found.tsx`: terminal temalı 404 sayfası.
 
 **Bitti sayılır:**
@@ -262,7 +269,7 @@ Frontend, backend hazır olmadan sahte veriyle ilerliyor. Gerçek API'ye geçiş
 
 **Ne:** `/admin` altına sadece giriş yapanın girebilmesi. **Bağlı:** F2, T2
 
-1. `next.config.ts` içinde `rewrites` ile `/api/:path*` isteklerini backend'e yönlendirin. **Neden:** site Vercel'de, backend Render'da, yani farklı alan adlarında. Tarayıcılar başka alan adının çerezini engelliyor. Yönlendirme sayesinde oturum çerezi sitenin kendi alan adında kalır.
+1. `next.config.ts` içinde `rewrites` ile `/api/:path*` isteklerini backend'e yönlendirin. Yönlendirmeleri dizi olarak verin (Next.js bunları sitenin kendi dosyalarından sonra uygular); `beforeFiles` kullanmayın, yoksa frontend'in kendi `/api/revalidate` ucu ezilir. **Neden:** site Vercel'de, backend Render'da, yani farklı alan adlarında. Tarayıcılar başka alan adının çerezini engelliyor. Yönlendirme sayesinde oturum çerezi sitenin kendi alan adında kalır.
 2. `/admin/giris`: e-posta ve şifre formu, hatalı girişte genel bir mesaj ("bilgiler hatalı"; hangisinin yanlış olduğunu söylemeyin).
 3. `middleware.ts`: çerez yoksa `/admin/*` isteklerini girişe yönlendirsin. Asıl yetki kontrolü backend'de; bu sadece kullanıcı deneyimi için.
 4. Admin düzeni: sol menü (Yazılar, Projeler, Mesajlar, Profil), sağ üstte çıkış.
@@ -277,9 +284,11 @@ Frontend, backend hazır olmadan sahte veriyle ilerliyor. Gerçek API'ye geçiş
 
 1. Liste: tür, durum ve arama filtresiyle tablo; her satırda düzenle ve sil (silmeden önce onay).
 2. Editör: solda Markdown, sağda canlı önizleme. Önizleme F7'deki aynı Markdown işleyicisini kullanır, böylece gördüğünüz sitede çıkanla aynı olur.
-3. Alanlar: tür, başlık, slug (başlıktan otomatik, düzenlenebilir), özet, kapak görseli, seviye (sadece haberde), kategori, etiketler, durum, yayın tarihi, okuma süresi (otomatik, elle değiştirilebilir), SEO başlığı ve açıklaması.
+3. Alanlar: tür, başlık, slug (başlıktan otomatik, düzenlenebilir), özet, kapak görseli ve alt metni (kapak varsa zorunlu), seviye ve kaynak linki (sadece haberde), kategori (haberde zorunlu), etiketler (yeni etiket önce `POST /api/admin/tags` ile oluşturulur), durum (Taslak / Yayında), yayın tarihi (ileri bir tarih yazıyı zamanlar), okuma süresi (otomatik, elle değiştirilebilir), SEO başlığı ve açıklaması.
 4. Görsel yükleme: sürükle bırak, yükleme sırasında ilerleme, en fazla 5 MB.
 5. Kaydedilmemiş değişiklik varken sayfadan çıkarken uyarı.
+6. Yayındaki bir yazının slug'ı değiştirilirken "eski link çalışmayacak" uyarısı.
+7. Listede zamanlanmış yazılar ayrı bir rozetle görünsün (admin yanıtındaki `scheduled` alanı).
 
 **Bitti sayılır:**
 
@@ -291,7 +300,7 @@ Frontend, backend hazır olmadan sahte veriyle ilerliyor. Gerçek API'ye geçiş
 
 1. Projeler: ekle, düzenle, sil, sıralamayı değiştir, "öne çıkar" işareti.
 2. Mesajlar: iletişim formundan gelenler, okundu işareti.
-3. Profil: ad, rol, biyografi, fotoğraf, LinkedIn ve GitHub. Ekip kartları buradan beslenir.
+3. Profil: ad, rol, biyografi, fotoğraf, LinkedIn ve GitHub. Ekip kartları buradan beslenir. Fotoğraf yüklenince yanıttaki `publicId` de profille birlikte gönderilir.
 
 **Bitti sayılır:**
 
@@ -319,10 +328,10 @@ Backend sözleşmedeki uç noktaları birebir uygular. Bir güvenlik bloğu oldu
 
 **Ne:** T1'deki modelin Prisma şeması ve başlangıç verisi. **Bağlı:** B1, T1
 
-1. `prisma/schema.prisma`'ya T1'deki modelleri yazın. Bunlara ek olarak oturumlar için bir `Session` modeli: `id`, `userId`, `expiresAt`.
-2. `slug` alanlarına `@unique`, sık filtrelenen alanlara (`type`, `status`, `publishedAt`) indeks ekleyin.
+1. `prisma/schema.prisma`'ya sözleşmedeki modelleri yazın (oturumlar için `Session` modeli dahil: `id`, `tokenHash`, `userId`, `expiresAt`, `createdAt`). Tarih alanları `@db.Timestamptz(3)` olsun.
+2. `slug` alanlarına `@unique`, sık filtrelenen alanlara indeks ekleyin. Liste sözleşmenin "Veritabanı indeksleri" bölümünde.
 3. Neon'un `dev` branch adresiyle `npm run db:migrate` çalıştırın.
-4. `prisma/seed.ts`: iki admin kullanıcı, iki yazar profili, üç kategori (zafiyet, saldırı, araç) ve birkaç örnek yazı. Admin şifreleri koda yazılmasın, `.env`'den okunsun.
+4. `prisma/seed.ts`: iki admin kullanıcı, iki yazar profili, üç kategori (zafiyet, saldırı, araç) ve birkaç örnek yazı. Admin e-postaları ve şifreleri koda yazılmasın, `.env`'deki `SEED_ADMIN_*` değişkenlerinden okunsun.
 
 **Bitti sayılır:**
 
@@ -334,7 +343,7 @@ Backend sözleşmedeki uç noktaları birebir uygular. Bir güvenlik bloğu oldu
 **Ne:** Güvenli giriş, çıkış ve oturum kontrolü. **Bağlı:** B2
 
 1. Şifreleri `argon2` ile hash'leyin. Düz metin şifre hiçbir yerde durmasın.
-2. Girişte veritabanına rastgele bir oturum kimliği kaydedin (`crypto.randomBytes(32)`), bunu çerez olarak gönderin. JWT yerine bu yöntemi seçtik, çünkü çıkışta oturum gerçekten silinebiliyor.
+2. Girişte rastgele bir oturum anahtarı üretin (`crypto.randomBytes(32)`). Anahtarı çerez olarak gönderin, veritabanına yalnızca SHA-256 özetini (`tokenHash`) kaydedin; veritabanı sızsa bile oturumlar ele geçirilemez. JWT yerine bu yöntemi seçtik, çünkü çıkışta oturum gerçekten silinebiliyor.
 3. Çerez ayarları: `httpOnly`, `secure` (yayında), `sameSite: 'lax'`, 7 gün geçerli. `domain` vermeyin. Frontend istekleri kendi alan adı üzerinden ilettiği için (F10) çerez orada kalır.
 4. Giriş uç noktasına `@fastify/rate-limit`: aynı IP'den 15 dakikada en fazla 5 deneme.
 5. Hatalı girişte her zaman aynı mesaj: "E-posta veya şifre hatalı". Kullanıcının var olup olmadığı belli olmasın.
@@ -349,16 +358,18 @@ Backend sözleşmedeki uç noktaları birebir uygular. Bir güvenlik bloğu oldu
 
 **Ne:** Haber ve blogların listelenmesi, okunması ve yönetimi. **Bağlı:** B2, B3, T2
 
-1. Herkese açık liste ve detay: sadece `status = PUBLISHED` ve `publishedAt <= şimdi` olanlar dönsün. Zamanlanmış yazılar bu sayede ek bir zamanlayıcı olmadan, tarihi gelince kendiliğinden görünür.
+1. Herkese açık liste ve detay: sadece `status = PUBLISHED` ve `publishedAt <= şimdi` olanlar dönsün. Zamanlanmış yazıların verisi bu sayede tarihi gelince kendiliğinden görünür; önceden üretilmiş sayfaların yenilenmesi B10'daki `publish-due` ucuyla yapılır.
 2. Listede filtreler (`type`, `category`, `severity`, `tag`, `author`) ve sayfalama (`page`, en fazla 50 kayıt). Listede `content` dönmesin, sayfa hızı için.
 3. Slug üretimi: `slugify(title, { locale: 'tr', lower: true, strict: true })`. Aynı slug varsa sonuna `-2`, `-3` ekleyin.
-4. Okuma süresi: kelime sayısı / 200, yukarı yuvarlanmış. `readingTimeManual` açıksa elle girilen değer korunur.
-5. Admin CRUD: tüm durumları görebilir, oluşturur, kısmi günceller (PATCH), siler. Her gelen veri Zod şemasından geçer.
+4. Okuma süresi: kelime sayısı / 200, yukarı yuvarlanmış, en az 1. `readingTimeManual` açıksa elle girilen değer korunur.
+5. Admin CRUD: tüm durumları görebilir, oluşturur, kısmi günceller (PATCH), siler. Her gelen veri Zod şemasından geçer. Taslak ve yayın için iki ayrı şema var; tür değişikliği, slug ve `publishedAt` kuralları sözleşmede.
+6. `GET /api/posts/:slug/related`: ilgili yazılar, kuralı sözleşmede.
 
 **Bitti sayılır:**
 
 - [ ] Taslak ve tarihi gelmemiş yazılar herkese açık uçlarda görünmüyor
 - [ ] "Şifreleme Çıkmazları" başlığı `sifreleme-cikmazlari` slug'ını üretiyor
+- [ ] Haberden bloğa çevrilen yazı 400 almadan kaydediliyor, `severity` boşalıyor
 
 ### B5 · Kategori, etiket, proje ve yazar uçları
 
@@ -373,16 +384,18 @@ Backend sözleşmedeki uç noktaları birebir uygular. Bir güvenlik bloğu oldu
 
 ### B6 · Canlı akış ve arama
 
-**Ne:** Ana sayfadaki kayan şerit ve arama sayfasının verisi. **Bağlı:** B4
+**Ne:** Ana sayfadaki kayan şerit, arama dizini ve admin araması. **Bağlı:** B4
 
-1. `GET /api/feed`: son 8 yayınlanmış haber, blog ve proje güncellemesi, etiketleriyle (KRİTİK, HABER, BLOG, PROJE).
-2. Arama için PostgreSQL'in kendi tam metin aramasını kullanın, ek servis gerekmez. `turkish` dil ayarıyla başlık, özet ve içerik aranır.
-3. Hız için elle yazılmış bir migration ile GIN indeksi ekleyin. Sorgu `prisma.$queryRaw` ile, parametreli yazılır (asla metin birleştirerek değil).
+1. `GET /api/feed`: son 8 kayıt: yayınlanmış haberler, bloglar ve yeni eklenen projeler, etiketleriyle (KRİTİK, HABER, BLOG, PROJE).
+2. `GET /api/search-index`: herkese açık tüm yazıların arama dizini (alanlar sözleşmede). Okuyucu araması bu dizinle tarayıcıda yapılır, backend'e gelmez (F8).
+3. Admin listesindeki `q` araması için PostgreSQL'in kendi tam metin aramasını kullanın, ek servis gerekmez. `turkish` dil ayarıyla başlık, özet ve içerik aranır.
+4. Hız için elle yazılmış bir migration ile GIN indeksi ekleyin. Sorgu `prisma.$queryRaw` ile, parametreli yazılır (asla metin birleştirerek değil).
 
 **Bitti sayılır:**
 
-- [ ] "zafiyet" araması "zafiyetler" geçen yazıyı da buluyor
-- [ ] Aramaya `'; DROP TABLE` yazılınca hata değil, boş sonuç dönüyor
+- [ ] Admin aramasında "zafiyet" araması "zafiyetler" geçen yazıyı da buluyor
+- [ ] Admin aramasına `'; DROP TABLE` yazılınca hata değil, boş sonuç dönüyor
+- [ ] Arama dizininde taslak ve tarihi gelmemiş yazı yok
 
 ### B7 · Görsel yükleme
 
@@ -390,7 +403,8 @@ Backend sözleşmedeki uç noktaları birebir uygular. Bir güvenlik bloğu oldu
 
 1. `@fastify/multipart` ile en fazla 5 MB, tek dosya.
 2. Dosya türünü uzantıdan değil, dosyanın ilk baytlarından kontrol edin (`file-type` paketi). Sadece jpg, png, webp kabul.
-3. Cloudinary SDK ile `rootandadmin/` klasörüne yükleyin, geriye `{ url, width, height }` dönün.
+3. Cloudinary SDK ile `rootandadmin/` klasörüne yükleyin, geriye `{ url, width, height, publicId }` dönün.
+4. Kapak görseli ya da profil fotoğrafı değişince veya yazı silinince eski görseli `publicId` ile Cloudinary'den silin. Silme başarısız olursa işlem yine başarılı sayılsın, hata log'a yazılsın.
 
 **Bitti sayılır:**
 
@@ -418,22 +432,27 @@ Backend sözleşmedeki uç noktaları birebir uygular. Bir güvenlik bloğu oldu
 2. `@fastify/cors`: sadece `FRONTEND_URL`'e izin, `credentials: true`.
 3. Genel istek limiti (dakikada 100) ve istek gövdesi sınırı (1 MB, yükleme hariç).
 4. Hata yönetimi: yayında hata ayrıntısı ve satır numarası asla kullanıcıya gösterilmesin, sadece log'a yazılsın. Yanıt her zaman sözleşmedeki hata biçiminde.
+5. Gerçek ziyaretçi IP'si: admin ve iletişim istekleri Vercel üzerinden geldiği için (F10) backend Vercel'in IP'sini görebilir. Bu durumda B3 ve B8'deki limitler tüm ziyaretçiler için tek sayaç gibi çalışır. Fastify'da `trustProxy` ayarını açın ve limitlerin `x-forwarded-for` başlığındaki gerçek IP'yi kullandığını deneyin.
 
 **Bitti sayılır:**
 
 - [ ] Başka bir siteden yapılan istek CORS hatası alıyor
 - [ ] Bilerek tetiklenen bir hata kullanıcıya sadece `INTERNAL` kodu dönüyor
+- [ ] Yayında iki farklı ağdan gönderilen iletişim mesajları ayrı sayılıyor
 
 ### B10 · Sayfa yenileme tetikleyicisi
 
 **Ne:** Bir yazı yayınlanınca sitedeki önceden üretilmiş sayfaların hemen güncellenmesi. **Bağlı:** B4
 
-1. Yayınlanan bir yazı oluşturulduğunda, güncellendiğinde ya da silindiğinde frontend'in `/api/revalidate` ucunu çağırın (sözleşmede yazıyor).
+1. Okuyucu içeriğini etkileyen her değişiklikte frontend'in `/api/revalidate` ucunu çağırın. Gövdede sayfa yolları değil önbellek etiketleri gönderilir; hangi olayda hangi etiket gideceği sözleşmenin "Yayın sonrası yenileme" tablosunda.
 2. İstek başarısız olursa admin işlemi yine de başarılı sayılsın, hata sadece log'a yazılsın.
+3. `POST /api/internal/publish-due`: tarihi gelen zamanlanmış yazılar için yenileme isteği gönderir. `x-cron-secret` başlığı `CRON_SECRET` ile doğrulanır. Ayrıntı sözleşmenin "Zamanlanmış yazılar" bölümünde. Y4'teki zamanlayıcı bu ucu çağırır.
 
 **Bitti sayılır:**
 
 - [ ] Frontend kapalıyken yazı kaydetmek hata vermiyor
+- [ ] Tarihi gelen zamanlanmış yazı `publish-due` çağrılınca bir kez yenileniyor, ikinci çağrıda tekrar yenilenmiyor
+- [ ] Yanlış `x-cron-secret` ile 401 dönüyor
 
 ### B11 · Testler
 
@@ -441,7 +460,7 @@ Backend sözleşmedeki uç noktaları birebir uygular. Bir güvenlik bloğu oldu
 
 1. `vitest` kurun. Fastify'ın `app.inject()` özelliğiyle sunucuyu gerçekten açmadan istek atın.
 2. Testler için Neon'da ayrı bir `test` branch'i kullanın, `dev` verisi bozulmasın.
-3. En az şunları test edin: hatalı şifre, giriş limiti, oturumsuz admin isteği, taslak ve zamanlanmış yazının gizli kalması, hatalı veriyle 400 dönmesi.
+3. En az şunları test edin: hatalı şifre, giriş limiti, oturumsuz admin isteği, taslak ve zamanlanmış yazının gizli kalması (arama dizini dahil), hatalı veriyle 400 dönmesi, yanlış anahtarla `publish-due` isteği.
 
 **Bitti sayılır:**
 
@@ -480,7 +499,7 @@ Bu fazda sahte veri kalkıyor, frontend gerçek backend'le konuşmaya başlıyor
 **Ne:** Admin'den yayınlanan yazının sitede beklemeden görünmesi. **Kim:** Abdulbaki. **Bağlı:** E1, B10
 
 1. `app/api/revalidate/route.ts`: gelen istekte `x-revalidate-secret` başlığını doğrulayın, yanlışsa 401 dönün.
-2. Doğruysa gönderilen yollar için `revalidatePath()` çağırın.
+2. Doğruysa gövdedeki her etiket için `revalidateTag()` çağırın. Etiketler F4'teki veri isteklerinde verilenlerle aynı olmalı.
 
 **Bitti sayılır:**
 
@@ -553,7 +572,7 @@ Yayın sırası önemli: önce veritabanı, sonra backend, en son frontend. Her 
 1. Render → New → Web Service → repoyu seçin. Bölge: Frankfurt. Plan: Free.
 2. Root Directory: `backend`. Build: `npm ci && npx prisma generate && npm run build`. Start: `npx prisma migrate deploy && npm start`.
 3. Health Check Path: `/api/health`.
-4. Ortam değişkenleri: `.env.example`'daki her şey, gerçek değerlerle. `NODE_ENV=production`. `FRONTEND_URL` şimdilik boş, Y3'ten sonra doldurulacak.
+4. Ortam değişkenleri: `.env.example`'daki her şey, gerçek değerlerle. `NODE_ENV=production`. `FRONTEND_URL` şimdilik boş, Y3'ten sonra doldurulacak. `SEED_ADMIN_*` değişkenleri yalnızca Y1'deki seed için gerekir; seed'den sonra Render'dan silin.
 
 **Bitti sayılır:**
 
@@ -564,7 +583,7 @@ Yayın sırası önemli: önce veritabanı, sonra backend, en son frontend. Her 
 **Kim:** Abdulbaki. **Bağlı:** Y2
 
 1. Vercel → Add New → Project → repoyu seçin. Root Directory: `frontend`.
-2. Ortam değişkenleri: backend adresi (Render), `NEXT_PUBLIC_SITE_URL`, `REVALIDATE_SECRET` (backend'dekiyle aynı), `USE_MOCK_DATA=false`.
+2. Ortam değişkenleri: `API_URL` (Render'daki backend adresi), `NEXT_PUBLIC_SITE_URL`, `REVALIDATE_SECRET` (backend'dekiyle aynı), `USE_MOCK_DATA=false`.
 3. Yayın adresini Buğra'ya iletin. Render'da `FRONTEND_URL` olarak girilsin ve backend yeniden başlatılsın.
 4. Production branch'i `main` olarak ayarlayın. `dev`'e atılan her PR için Vercel otomatik bir önizleme adresi açar, incelemede kullanın.
 
@@ -572,18 +591,19 @@ Yayın sırası önemli: önce veritabanı, sonra backend, en son frontend. Her 
 
 - [ ] `rootandadmin.vercel.app` (ya da size verilen adres) açılıyor ve gerçek veriyi gösteriyor
 
-### Y4 · Render uyku sorunu (isteğe bağlı)
+### Y4 · Zamanlayıcı: zamanlanmış yazılar ve Render uykusu
 
-**Kim:** Buğra. **Bağlı:** Y2
+**Kim:** Buğra. **Bağlı:** Y2, B10
 
-Render'ın ücretsiz sunucusu 15 dakika istek almazsa uyuyor, uyanması yaklaşık 1 dakika sürüyor. Okuyucu sayfaları önceden üretildiği için ziyaretçiler bunu hissetmez. Gecikme sadece admin panelin ilk açılışında olur.
+Zamanlanmış yazıların sitede görünmesi için önceden üretilmiş sayfaların yenilenmesi gerekiyor; bunu bir zamanlayıcı tetikliyor. Bu yüzden bu görev artık isteğe bağlı değil. Yan faydası: Render'ın ücretsiz sunucusu 15 dakika istek almazsa uyuyor ve uyanması yaklaşık 1 dakika sürüyor. Düzenli istek bunu da önler, admin panel ilk açılışta beklemez.
 
-1. Bu gecikme rahatsız ederse, ücretsiz bir zamanlayıcıyla (örneğin cron-job.org) her 14 dakikada bir `/api/health` adresine istek atın.
+1. cron-job.org'da ücretsiz bir görev açın: her 14 dakikada bir `POST https://<servis>.onrender.com/api/internal/publish-due`, `x-cron-secret` başlığıyla. Anahtar Render'daki `CRON_SECRET` ile aynı olmalı.
 2. Aylık 750 ücretsiz saat tek bir servisin bütün ay açık kalmasına yetiyor.
 
 **Bitti sayılır:**
 
-- [ ] Karar verildi: ya zamanlayıcı kuruldu ya da gecikme kabul edildi
+- [ ] Zamanlayıcı kuruldu, cron-job.org geçmişinde başarılı (200) çağrılar görünüyor
+- [ ] Birkaç dakika ileriye zamanlanan bir test yazısı, tarihi geldikten sonra en geç 14 dakika içinde sitede görünüyor
 
 ### Y5 · İlk içerikler
 
@@ -603,6 +623,7 @@ Render'ın ücretsiz sunucusu 15 dakika istek almazsa uyuyor, uyanması yaklaş�
 
 - [ ] Yayın adresinde admin girişi çalışıyor
 - [ ] Yeni bir yazı yayınlanınca ana sayfada görünüyor
+- [ ] Zamanlayıcı çalışıyor (Y4)
 - [ ] İletişim formu mesajı admin panele düşüyor
 - [ ] securityheaders.com taraması en az A notu veriyor
 - [ ] Google Search Console'a site eklendi, sitemap gönderildi
