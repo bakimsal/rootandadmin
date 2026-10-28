@@ -4,7 +4,7 @@ Next.js uygulaması: herkese açık blog sayfaları ve admin panel arayüzü.
 
 **Sorumlu:** Abdulbaki (öneri)
 
-## İlk kurulum (bir kez, Faz 1)
+## İlk kurulum (bir kez, F1)
 
 Bu klasörün içinde Next.js iskeletini resmi araçla oluşturun. Repo kök dizinindeyken:
 
@@ -12,14 +12,17 @@ Bu klasörün içinde Next.js iskeletini resmi araçla oluşturun. Repo kök diz
 npx create-next-app@latest frontend --ts --tailwind --eslint --app --src-dir --import-alias "@/*" --use-npm
 ```
 
-Klasör boş olmadığı için araç uyarı verirse bu README'yi geçici olarak başka yere taşıyıp komutu çalıştırın, sonra geri koyun.
+Araç yalnızca boş klasörde çalışır. `frontend/` içinde şimdiden `README.md`, `.env.example` ve `src/types/api.ts` (API tipleri, T2) var. Komuttan önce bu üçünü geçici olarak başka bir yere taşıyın, komuttan sonra aynı yerlerine geri koyun. `src/types/api.ts` silinirse sözleşmeden yeniden yazmak gerekir.
 
 Ardından içerik ve test için gerekenler:
 
 ```bash
 cd frontend
-npm install shiki gray-matter reading-time
+npm install unified remark-parse remark-gfm remark-rehype rehype-sanitize rehype-pretty-code rehype-slug rehype-stringify shiki
+npm install -D prettier prettier-plugin-tailwindcss
 ```
+
+Markdown işleme zinciri F7'de anlatılıyor. Okuma süresi backend'de hesaplandığı için frontend'de ayrı bir pakete gerek yok.
 
 ## Çalıştırma
 
@@ -36,24 +39,28 @@ src/
 ├── app/
 │   ├── (site)/              Herkese açık sayfalar
 │   │   ├── page.tsx         Ana sayfa
-│   │   ├── blog/[slug]/     Yazı detay
-│   │   ├── kategori/[slug]/
-│   │   ├── etiket/[slug]/
+│   │   ├── haberler/        Haber listesi; [slug]/ haber detay (adres önerisi, sözleşmede açık soru)
+│   │   ├── bloglar/         Blog listesi; [slug]/ blog detay
+│   │   ├── projeler/
 │   │   ├── yazar/[slug]/
-│   │   ├── arama/
-│   │   ├── hakkimizda/
+│   │   ├── ara/             Arama, tarayıcıda search-index.json üzerinde
 │   │   └── iletisim/
 │   ├── admin/               Admin panel (giriş korumalı)
 │   │   ├── giris/
-│   │   ├── yazilar/
-│   │   └── yazilar/[id]/
-│   ├── api/revalidate/      Backend'in çağırdığı sayfa yenileme ucu
+│   │   ├── yazilar/         Liste; [id]/ düzenleme
+│   │   ├── projeler/
+│   │   ├── mesajlar/
+│   │   └── profil/
+│   ├── api/revalidate/      Backend'in çağırdığı sayfa yenileme ucu (revalidateTag)
+│   ├── search-index.json/   Önceden üretilen arama dizini
+│   ├── rss.xml/
 │   ├── sitemap.ts
+│   ├── robots.ts
 │   └── not-found.tsx
 ├── components/              Ortak bileşenler (ui/, blog/, admin/)
 ├── lib/
 │   ├── api.ts               Backend istemcisi
-│   └── mock/                Faz 2'de kullanılacak sahte veri
+│   └── mock/                Faz 2A'da kullanılacak sahte veri (F4)
 └── types/                   API sözleşmesindeki tipler
 ```
 

@@ -1,6 +1,6 @@
 # rootandadmin
 
-Öğrendiklerimizi, günlük haberleri ve kendi düşüncelerimizi paylaştığımız blog platformu ve yönetim paneli.
+Siber güvenlik haberlerini, blog yazılarımızı ve projelerimizi paylaştığımız site ve yönetim paneli.
 
 **Ekip:** Abdulbaki İmsal ([@bakimsal](https://github.com/bakimsal)) · Buğra Gedik ([@bugragedik](https://github.com/bugragedik))
 
@@ -23,9 +23,10 @@ rootandadmin/
 ├── frontend/        Next.js uygulaması (blog + admin panel arayüzü)
 ├── backend/         Fastify API (auth, yazılar, kategoriler, görsel yükleme)
 ├── docs/
-│   ├── api-sozlesmesi.md     Frontend ile backend arasındaki sözleşme (TASLAK)
+│   ├── gorev-plani.md        Görev görev yapılacaklar: kim, neyi, nasıl (esas plan)
+│   ├── api-sozlesmesi.md     Frontend ile backend arasındaki sözleşme (sürüm 0.2, onay bekliyor)
 │   ├── kararlar.md           Teknoloji kararları ve gerekçeleri
-│   └── rootandadmin-plan.xlsx  4 haftalık plan, araçlar, özellik listesi
+│   └── rootandadmin-plan.xlsx  İlk tarihli plan (artık geçerli değil, görev planı esas)
 ├── .github/         PR ve issue şablonları
 ├── CONTRIBUTING.md  Branch, commit ve PR kuralları
 └── CLAUDE.md        Claude için proje bağlamı
@@ -38,13 +39,6 @@ rootandadmin/
 3. Frontend için [frontend/README.md](frontend/README.md), backend için [backend/README.md](backend/README.md) adımlarını izleyin.
 4. Çalışmaya başlamadan önce [CONTRIBUTING.md](CONTRIBUTING.md) dosyasını okuyun.
 
-## Takvim
+## Plan
 
-| Faz | Tarih | İçerik |
-|---|---|---|
-| 1 · Kurulum | 12–14 Ekim | Repo, hesaplar, API sözleşmesi, tasarım yönü |
-| 2 · Geliştirme | 15–28 Ekim | Frontend (mock veri) ve backend paralel |
-| 3 · Birleştirme | 29 Ekim – 4 Kasım | Gerçek API, SEO, test |
-| 4 · Yayın | 5–8 Kasım | Yayına alma, ilk yazılar |
-
-Görev bazında detaylı plan: [docs/rootandadmin-plan.xlsx](docs/rootandadmin-plan.xlsx) ve GitHub Projects panosu.
+Proje tarih yerine görev sırasıyla ilerliyor. Her görevin sorumlusu, adımları ve kabul kriterleri [docs/gorev-plani.md](docs/gorev-plani.md) dosyasında. Görevler GitHub Projects panosunda issue olarak takip edilir.

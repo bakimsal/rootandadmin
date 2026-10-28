@@ -1,6 +1,6 @@
 # rootandadmin — Claude için proje bağlamı
 
-İki kişilik ekibin (Abdulbaki İmsal @bakimsal, Buğra Gedik @bugragedik) blog platformu. Öğrenilenler, günlük haberler ve kişisel düşünceler paylaşılacak; yanında yazıların yönetildiği bir admin panel var. Kullanıcılarla Türkçe konuş.
+İki kişilik ekibin (Abdulbaki İmsal @bakimsal, Buğra Gedik @bugragedik) siber güvenlik sitesi: haberler, blog yazıları ve projeler paylaşılacak; yanında içeriğin yönetildiği bir admin panel var. Kullanıcılarla Türkçe konuş.
 
 ## Yığın ve kısıtlar
 
@@ -22,4 +22,6 @@ Arayüz kesinlikle basit veya çocuksu görünmemeli; profesyonel, editoryal bir
 
 ## Plan
 
-4 hafta, 12 Ekim – 8 Kasım 2026. Detay: `docs/rootandadmin-plan.xlsx`. Teknoloji gerekçeleri: `docs/kararlar.md`.
+Görev planı: `docs/gorev-plani.md`. Görevler kodla anılır (H, T, F, B, E, Y; örn. "F7", "B3"). Kullanıcı bir görev kodu verdiğinde önce o dosyada görevin **Bağlı**, **Nasıl** ve **Bitti sayılır** kısımlarını oku; adımları izle ve işi bitirmeden önce kabul kriterlerini tek tek kontrol et. Bağlı olduğu görevler bitmemiş görünüyorsa başlamadan kullanıcıya söyle.
+
+Teknoloji gerekçeleri: `docs/kararlar.md`. İlk tarihli plan tablosu (artık görev planı esas): `docs/rootandadmin-plan.xlsx`.
