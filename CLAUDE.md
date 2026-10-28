@@ -1,6 +1,6 @@
 # rootandadmin — Claude için proje bağlamı
 
-İki kişilik ekibin (Abdulbaki İmsal @bakimsal, Buğra Gedik @bugragedik) blog platformu. Öğrenilenler, günlük haberler ve kişisel düşünceler paylaşılacak; yanında yazıların yönetildiği bir admin panel var. Kullanıcılarla Türkçe konuş.
+İki kişilik ekibin (Abdulbaki İmsal @bakimsal, Buğra Gedik @bugragedik) siber güvenlik sitesi: haberler, blog yazıları ve projeler paylaşılacak; yanında içeriğin yönetildiği bir admin panel var. Kullanıcılarla Türkçe konuş.
 
 ## Yığın ve kısıtlar
 

@@ -1,6 +1,6 @@
 # rootandadmin
 
-Öğrendiklerimizi, günlük haberleri ve kendi düşüncelerimizi paylaştığımız blog platformu ve yönetim paneli.
+Siber güvenlik haberlerini, blog yazılarımızı ve projelerimizi paylaştığımız site ve yönetim paneli.
 
 **Ekip:** Abdulbaki İmsal ([@bakimsal](https://github.com/bakimsal)) · Buğra Gedik ([@bugragedik](https://github.com/bugragedik))
 
@@ -23,10 +23,10 @@ rootandadmin/
 ├── frontend/        Next.js uygulaması (blog + admin panel arayüzü)
 ├── backend/         Fastify API (auth, yazılar, kategoriler, görsel yükleme)
 ├── docs/
-│   ├── gorev-plani.md        Görev görev yapılacaklar: kim, neyi, nasıl
-│   ├── api-sozlesmesi.md     Frontend ile backend arasındaki sözleşme (TASLAK)
+│   ├── gorev-plani.md        Görev görev yapılacaklar: kim, neyi, nasıl (esas plan)
+│   ├── api-sozlesmesi.md     Frontend ile backend arasındaki sözleşme (sürüm 0.2, onay bekliyor)
 │   ├── kararlar.md           Teknoloji kararları ve gerekçeleri
-│   └── rootandadmin-plan.xlsx  4 haftalık plan, araçlar, özellik listesi
+│   └── rootandadmin-plan.xlsx  İlk tarihli plan (artık geçerli değil, görev planı esas)
 ├── .github/         PR ve issue şablonları
 ├── CONTRIBUTING.md  Branch, commit ve PR kuralları
 └── CLAUDE.md        Claude için proje bağlamı
