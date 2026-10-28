@@ -143,7 +143,7 @@ Frontend, backend hazır olmadan sahte veriyle ilerliyor. Gerçek API'ye geçiş
 
 **Ne:** `frontend/` klasöründe çalışan boş bir Next.js uygulaması. **Bağlı:** H1
 
-1. `frontend/README.md`'deki `create-next-app` komutunu çalıştırın (TypeScript, Tailwind, App Router, `src/` klasörü).
+1. `frontend/README.md`'deki `create-next-app` komutunu çalıştırın (TypeScript, Tailwind, App Router, `src/` klasörü). Klasörde duran `README.md`, `.env.example` ve `src/types/api.ts` dosyalarını önce geçici olarak taşıyın, sonra geri koyun (README'de anlatılıyor).
 2. README'deki klasör yapısını boş dosyalarla oluşturun: `app/(site)`, `app/admin`, `components/ui`, `lib`, `types`.
 3. Prettier ekleyin: `npm i -D prettier prettier-plugin-tailwindcss`, `.prettierrc` dosyası oluşturun.
 4. `.env.example`'ı `.env.local` olarak kopyalayın.
@@ -243,7 +243,7 @@ Frontend, backend hazır olmadan sahte veriyle ilerliyor. Gerçek API'ye geçiş
 **Ne:** Kalan herkese açık sayfalar. **Bağlı:** F4
 
 1. `/projeler`: tüm proje kartları, GitHub ve demo linkleri. Proje detay sayfası yok, kartlar doğrudan bu linklere gider.
-2. `/iletisim`: ad, e-posta, mesaj formu. Botlara karşı görünmez bir tuzak alanı (honeypot) ekleyin. Form Faz 3'e kadar sahte başarı mesajı gösterir.
+2. `/iletisim`: ad, e-posta, mesaj formu. Botlara karşı görünmez bir tuzak alanı (honeypot) ekleyin; alanın adı `website` (sözleşmede). Form Faz 3'e kadar sahte başarı mesajı gösterir.
 3. `/yazar/[slug]`: yazar bilgisi ve yazıları.
 4. `/ara?q=...`: arama sonuçları. Header'daki arama butonu ve `⌘K` kısayolu buraya yönlendirir. Arama backend'e gitmez: `app/search-index.json/route.ts` sözleşmedeki `GET /api/search-index` yanıtını önceden üretir (`posts` etiketiyle), arama tarayıcıda bu dosya üzerinde yapılır. Türkçe karakterler için hem aranan metin hem veriler `toLocaleLowerCase('tr')` ile karşılaştırılsın.
 5. `not-found.tsx`: terminal temalı 404 sayfası.
@@ -298,7 +298,7 @@ Frontend, backend hazır olmadan sahte veriyle ilerliyor. Gerçek API'ye geçiş
 
 **Ne:** Kalan admin ekranları. **Bağlı:** F10
 
-1. Projeler: ekle, düzenle, sil, sıralamayı değiştir, "öne çıkar" işareti.
+1. Projeler: ekle, düzenle, sil, sıralamayı değiştir (sürükle bırak, tek istekle `PUT /api/admin/projects/order`), "öne çıkar" işareti.
 2. Mesajlar: iletişim formundan gelenler, okundu işareti.
 3. Profil: ad, rol, biyografi, fotoğraf, LinkedIn ve GitHub. Ekip kartları buradan beslenir. Fotoğraf yüklenince yanıttaki `publicId` de profille birlikte gönderilir.
 
@@ -376,7 +376,7 @@ Backend sözleşmedeki uç noktaları birebir uygular. Bir güvenlik bloğu oldu
 **Ne:** Yazılar dışındaki içeriğin uç noktaları. **Bağlı:** B2, B3
 
 1. Herkese açık: kategoriler ve etiketler (her biri yazı sayısıyla), projeler (`order` sırasıyla), yazarlar.
-2. Admin: hepsi için oluştur, güncelle, sil. Bir yazar yalnızca kendi profilini güncelleyebilsin.
+2. Admin: kategori, etiket ve projeler için oluştur, güncelle, sil; projeler için toplu sıralama ucu (`PUT /api/admin/projects/order`). Yazarlar oluşturulmaz ve silinmez, seed ile gelir; bir yazar yalnızca kendi profilini güncelleyebilsin.
 
 **Bitti sayılır:**
 
@@ -416,7 +416,7 @@ Backend sözleşmedeki uç noktaları birebir uygular. Bir güvenlik bloğu oldu
 **Ne:** Ziyaretçi mesajlarının kaydedilmesi ve admin panelde okunması. **Bağlı:** B2
 
 1. `POST /api/contact`: Zod ile doğrulama, mesaj en fazla 2000 karakter.
-2. Tuzak alan doluysa mesajı kaydetmeyin ama başarılı yanıt verin. Böylece botlar yakalandıklarını anlamaz.
+2. Tuzak alan (`website`) doluysa mesajı kaydetmeyin ama başarılı yanıt verin. Böylece botlar yakalandıklarını anlamaz.
 3. Aynı IP'den saatte en fazla 3 mesaj.
 4. Admin: mesaj listesi, okundu işaretleme, silme.
 

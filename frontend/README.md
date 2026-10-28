@@ -12,7 +12,7 @@ Bu klasörün içinde Next.js iskeletini resmi araçla oluşturun. Repo kök diz
 npx create-next-app@latest frontend --ts --tailwind --eslint --app --src-dir --import-alias "@/*" --use-npm
 ```
 
-Klasör boş olmadığı için araç uyarı verirse bu README'yi geçici olarak başka yere taşıyıp komutu çalıştırın, sonra geri koyun.
+Araç yalnızca boş klasörde çalışır. `frontend/` içinde şimdiden `README.md`, `.env.example` ve `src/types/api.ts` (API tipleri, T2) var. Komuttan önce bu üçünü geçici olarak başka bir yere taşıyın, komuttan sonra aynı yerlerine geri koyun. `src/types/api.ts` silinirse sözleşmeden yeniden yazmak gerekir.
 
 Ardından içerik ve test için gerekenler:
 
